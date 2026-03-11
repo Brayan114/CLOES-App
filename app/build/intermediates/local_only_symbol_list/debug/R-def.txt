@@ -1,0 +1,24 @@
+R_DEF: Internal format may change without notice
+local
+color black
+color cloes_cyan
+color cloes_pink
+color cloes_purple
+color purple_200
+color purple_500
+color purple_700
+color teal_200
+color teal_700
+color white
+drawable ic_launcher
+drawable ic_launcher_background
+drawable ic_launcher_foreground
+drawable muse_logo_1
+drawable muse_logo_2
+drawable muse_logo_3
+drawable muse_logo_4
+drawable muse_logo_5
+mipmap ic_launcher
+mipmap ic_launcher_round
+string app_name
+style Theme.CloesApp
