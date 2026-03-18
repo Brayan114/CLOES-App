@@ -1,0 +1,46 @@
+{
+  "name": "cloes-backend",
+  "version": "1.0.0",
+  "description": "CLOES App Backend — Real-time, Auth, Media, Coins, Calls",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "seed": "node src/utils/seed.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "express-async-errors": "^3.1.1",
+    "cors": "^2.8.5",
+    "helmet": "^7.1.0",
+    "dotenv": "^16.3.1",
+    "mongoose": "^8.0.3",
+    "mongoose-paginate-v2": "^1.7.4",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0",
+    "passport-jwt": "^4.0.1",
+    "socket.io": "^4.6.1",
+    "multer": "^1.4.5-lts.1",
+    "sharp": "^0.33.1",
+    "cloudinary": "^1.41.3",
+    "multer-storage-cloudinary": "^4.0.0",
+    "qrcode": "^1.5.3",
+    "uuid": "^9.0.1",
+    "node-cron": "^3.0.3",
+    "morgan": "^1.10.0",
+    "express-rate-limit": "^7.1.5",
+    "express-validator": "^7.0.1",
+    "compression": "^1.7.4",
+    "cookie-parser": "^1.4.6",
+    "date-fns": "^3.2.0",
+    "axios": "^1.6.5",
+    "firebase-admin": "^12.0.0",
+    "archiver": "^6.0.1",
+    "mime-types": "^2.1.35"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}
