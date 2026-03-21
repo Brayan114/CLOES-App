@@ -11,6 +11,12 @@
     <color name="teal_700">#FF018786</color>
     <color name="white">#FFFFFFFF</color>
     <string name="app_name">CLOES</string>
+    <string name="gcm_defaultSenderId" translatable="false">342272579642</string>
+    <string name="google_api_key" translatable="false">AIzaSyDESJs6dcSBOK5J74hEvDOOozzl4Ur7itQ</string>
+    <string name="google_app_id" translatable="false">1:342272579642:android:db09e5be03e355df3ebd03</string>
+    <string name="google_crash_reporting_api_key" translatable="false">AIzaSyDESJs6dcSBOK5J74hEvDOOozzl4Ur7itQ</string>
+    <string name="google_storage_bucket" translatable="false">cloes-app-101.firebasestorage.app</string>
+    <string name="project_id" translatable="false">cloes-app-101</string>
     <style name="Theme.CloesApp" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>

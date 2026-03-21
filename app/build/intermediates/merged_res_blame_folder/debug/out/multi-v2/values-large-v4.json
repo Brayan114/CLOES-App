@@ -1,10 +1,10 @@
 {
     "logs": [
         {
-            "outputFile": "com.cloes.app-mergeDebugResources-69:/values-large-v4/values-large-v4.xml",
+            "outputFile": "com.cloes.app-mergeDebugResources-3:/values-large-v4/values-large-v4.xml",
             "map": [
                 {
-                    "source": "C:\\Users\\HP\\.gradle\\caches\\9.0-milestone-1\\transforms\\9aa8cf847ffc31a370f2b315299af42f\\transformed\\appcompat-1.6.1\\res\\values-large-v4\\values-large-v4.xml",
+                    "source": "C:\\Users\\braya\\.gradle\\caches\\9.0-milestone-1\\transforms\\2a9cc01fd56eb09b9373ae26558c7d5b\\transformed\\appcompat-1.6.1\\res\\values-large-v4\\values-large-v4.xml",
                     "from": {
                         "startLines": "2,3,4,5,6,7,8,9,10",
                         "startColumns": "4,4,4,4,4,4,4,4,4",
@@ -14,7 +14,7 @@
                     }
                 },
                 {
-                    "source": "C:\\Users\\HP\\.gradle\\caches\\9.0-milestone-1\\transforms\\1bb61933beeea83dcace949a665309a5\\transformed\\material-1.11.0\\res\\values-large-v4\\values-large-v4.xml",
+                    "source": "C:\\Users\\braya\\.gradle\\caches\\9.0-milestone-1\\transforms\\439432e9a075fe93933703934341f51e\\transformed\\material-1.11.0\\res\\values-large-v4\\values-large-v4.xml",
                     "from": {
                         "startLines": "2,3,4,5",
                         "startColumns": "4,4,4,4",

@@ -59,6 +59,10 @@ const UserSchema = new mongoose.Schema({
   lastSeen:    { type: Date, default: Date.now },
   socketId:    { type: String, default: '' },
 
+  // ── Admin ───────────────────────────────────────────────────────────────
+  isAdmin:     { type: Boolean, default: false },
+  banned:      { type: Boolean, default: false },
+
 }, { timestamps: true });
 
 // ── Password hashing ──────────────────────────────────────────────────────────

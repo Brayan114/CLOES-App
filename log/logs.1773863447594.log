@@ -1,0 +1,485 @@
+2026-03-18T19:22:34.325526971Z [inf]  Starting Container
+2026-03-18T19:22:35.233639459Z [err]          throw new TypeError('JwtStrategy requires a secret or key');
+2026-03-18T19:22:35.233641429Z [err]  
+2026-03-18T19:22:35.233645693Z [err]          ^
+2026-03-18T19:22:35.233651623Z [err]  
+2026-03-18T19:22:35.233652362Z [err]  Node.js v22.22.1
+2026-03-18T19:22:35.233657183Z [err]  TypeError: JwtStrategy requires a secret or key
+2026-03-18T19:22:35.233661772Z [err]      at Function._load (node:internal/modules/cjs/loader:1263:12)
+2026-03-18T19:22:35.233663666Z [err]      at new JwtStrategy (/app/node_modules/passport-jwt/lib/strategy.js:45:15)
+2026-03-18T19:22:35.233668063Z [err]      at Object.<anonymous> (/app/src/config/passport.js:7:14)
+2026-03-18T19:22:35.233671919Z [err]      at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+2026-03-18T19:22:35.233673618Z [err]      at Module._compile (node:internal/modules/cjs/loader:1705:14)
+2026-03-18T19:22:35.233678265Z [err]      at Object..js (node:internal/modules/cjs/loader:1838:10)
+2026-03-18T19:22:35.233679956Z [err]      at wrapModuleLoad (node:internal/modules/cjs/loader:237:24)
+2026-03-18T19:22:35.233683592Z [err]      at Module.load (node:internal/modules/cjs/loader:1441:32)
+2026-03-18T19:22:35.233685096Z [err]      at Module.require (node:internal/modules/cjs/loader:1463:12)
+2026-03-18T19:22:35.233688952Z [err]      at require (node:internal/modules/helpers:147:16)
+2026-03-18T19:22:35.233704913Z [err]  npm warn config production Use `--omit=dev` instead.
+2026-03-18T19:22:35.233708271Z [inf]  
+2026-03-18T19:22:35.233711866Z [inf]  > cloes-backend@1.0.0 start
+2026-03-18T19:22:35.233715439Z [inf]  > node src/index.js
+2026-03-18T19:22:35.233718289Z [inf]  
+2026-03-18T19:22:35.233721091Z [err]  /app/node_modules/passport-jwt/lib/strategy.js:45
+2026-03-18T19:22:35.423502010Z [err]  npm warn config production Use `--omit=dev` instead.
+2026-03-18T19:22:35.439893131Z [inf]  
+2026-03-18T19:22:35.439903173Z [inf]  > cloes-backend@1.0.0 start
+2026-03-18T19:22:35.439908060Z [inf]  > node src/index.js
+2026-03-18T19:22:35.439918916Z [inf]  
+2026-03-18T19:22:35.776235661Z [err]  /app/node_modules/passport-jwt/lib/strategy.js:45
+2026-03-18T19:22:35.776244301Z [err]          throw new TypeError('JwtStrategy requires a secret or key');
+2026-03-18T19:22:35.776249413Z [err]          ^
+2026-03-18T19:22:35.776255093Z [err]  
+2026-03-18T19:22:35.776260219Z [err]  TypeError: JwtStrategy requires a secret or key
+2026-03-18T19:22:35.776265602Z [err]      at new JwtStrategy (/app/node_modules/passport-jwt/lib/strategy.js:45:15)
+2026-03-18T19:22:35.776270608Z [err]      at Object.<anonymous> (/app/src/config/passport.js:7:14)
+2026-03-18T19:22:35.776275432Z [err]      at Module._compile (node:internal/modules/cjs/loader:1705:14)
+2026-03-18T19:22:35.776318512Z [err]      at Object..js (node:internal/modules/cjs/loader:1838:10)
+2026-03-18T19:22:35.776323855Z [err]      at Module.load (node:internal/modules/cjs/loader:1441:32)
+2026-03-18T19:22:35.776328852Z [err]      at Function._load (node:internal/modules/cjs/loader:1263:12)
+2026-03-18T19:22:35.776334402Z [err]      at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+2026-03-18T19:22:35.776338950Z [err]      at wrapModuleLoad (node:internal/modules/cjs/loader:237:24)
+2026-03-18T19:22:35.776343529Z [err]      at Module.require (node:internal/modules/cjs/loader:1463:12)
+2026-03-18T19:22:35.776348337Z [err]      at require (node:internal/modules/helpers:147:16)
+2026-03-18T19:22:35.776353193Z [err]  
+2026-03-18T19:22:35.776357927Z [err]  Node.js v22.22.1
+2026-03-18T19:22:36.681766250Z [err]  npm warn config production Use `--omit=dev` instead.
+2026-03-18T19:22:36.694984542Z [inf]  
+2026-03-18T19:22:36.694988169Z [inf]  > cloes-backend@1.0.0 start
+2026-03-18T19:22:36.694991409Z [inf]  > node src/index.js
+2026-03-18T19:22:36.694995754Z [inf]  
+2026-03-18T19:22:37.275168623Z [err]      at Object.<anonymous> (/app/src/config/passport.js:7:14)
+2026-03-18T19:22:37.275174725Z [err]  
+2026-03-18T19:22:37.275180613Z [err]      at Module._compile (node:internal/modules/cjs/loader:1705:14)
+2026-03-18T19:22:37.275185595Z [err]  TypeError: JwtStrategy requires a secret or key
+2026-03-18T19:22:37.275190800Z [err]      at Object..js (node:internal/modules/cjs/loader:1838:10)
+2026-03-18T19:22:37.275192181Z [err]      at Module.load (node:internal/modules/cjs/loader:1441:32)
+2026-03-18T19:22:37.275201022Z [err]      at Function._load (node:internal/modules/cjs/loader:1263:12)
+2026-03-18T19:22:37.275201120Z [err]      at new JwtStrategy (/app/node_modules/passport-jwt/lib/strategy.js:45:15)
+2026-03-18T19:22:37.275206662Z [err]      at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+2026-03-18T19:22:37.275208699Z [err]  /app/node_modules/passport-jwt/lib/strategy.js:45
+2026-03-18T19:22:37.275216075Z [err]          throw new TypeError('JwtStrategy requires a secret or key');
+2026-03-18T19:22:37.275220268Z [err]          ^
+2026-03-18T19:22:37.275343753Z [err]      at wrapModuleLoad (node:internal/modules/cjs/loader:237:24)
+2026-03-18T19:22:37.275348671Z [err]      at Module.require (node:internal/modules/cjs/loader:1463:12)
+2026-03-18T19:22:37.275355820Z [err]      at require (node:internal/modules/helpers:147:16)
+2026-03-18T19:22:37.275360183Z [err]  
+2026-03-18T19:22:37.275364007Z [err]  Node.js v22.22.1
+2026-03-18T19:22:38.446896738Z [err]  npm warn config production Use `--omit=dev` instead.
+2026-03-18T19:22:38.501484165Z [inf]  
+2026-03-18T19:22:38.501488727Z [inf]  > cloes-backend@1.0.0 start
+2026-03-18T19:22:38.501491582Z [inf]  > node src/index.js
+2026-03-18T19:22:38.501494348Z [inf]  
+2026-03-18T19:22:38.785719871Z [err]      at require (node:internal/modules/helpers:147:16)
+2026-03-18T19:22:38.785725932Z [err]  /app/node_modules/passport-jwt/lib/strategy.js:45
+2026-03-18T19:22:38.785728138Z [err]  
+2026-03-18T19:22:38.785732213Z [err]          throw new TypeError('JwtStrategy requires a secret or key');
+2026-03-18T19:22:38.785733961Z [err]  Node.js v22.22.1
+2026-03-18T19:22:38.785736614Z [err]          ^
+2026-03-18T19:22:38.785739854Z [err]  
+2026-03-18T19:22:38.785743001Z [err]  TypeError: JwtStrategy requires a secret or key
+2026-03-18T19:22:38.785745794Z [err]      at new JwtStrategy (/app/node_modules/passport-jwt/lib/strategy.js:45:15)
+2026-03-18T19:22:38.785749574Z [err]      at Object.<anonymous> (/app/src/config/passport.js:7:14)
+2026-03-18T19:22:38.785752597Z [err]      at Module._compile (node:internal/modules/cjs/loader:1705:14)
+2026-03-18T19:22:38.785755232Z [err]      at Object..js (node:internal/modules/cjs/loader:1838:10)
+2026-03-18T19:22:38.785758044Z [err]      at Module.load (node:internal/modules/cjs/loader:1441:32)
+2026-03-18T19:22:38.785761025Z [err]      at Function._load (node:internal/modules/cjs/loader:1263:12)
+2026-03-18T19:22:38.785763943Z [err]      at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+2026-03-18T19:22:38.785767238Z [err]      at wrapModuleLoad (node:internal/modules/cjs/loader:237:24)
+2026-03-18T19:22:38.785770106Z [err]      at Module.require (node:internal/modules/cjs/loader:1463:12)
+2026-03-18T19:22:41.507642631Z [err]  npm warn config production Use `--omit=dev` instead.
+2026-03-18T19:22:41.509054781Z [inf]  
+2026-03-18T19:22:41.509063394Z [inf]  > cloes-backend@1.0.0 start
+2026-03-18T19:22:41.509068550Z [inf]  > node src/index.js
+2026-03-18T19:22:41.509072864Z [inf]  
+2026-03-18T19:22:41.973622680Z [err]  /app/node_modules/passport-jwt/lib/strategy.js:45
+2026-03-18T19:22:41.973626877Z [err]          throw new TypeError('JwtStrategy requires a secret or key');
+2026-03-18T19:22:41.973630432Z [err]          ^
+2026-03-18T19:22:41.973634842Z [err]  
+2026-03-18T19:22:41.973638478Z [err]  TypeError: JwtStrategy requires a secret or key
+2026-03-18T19:22:41.973643933Z [err]      at new JwtStrategy (/app/node_modules/passport-jwt/lib/strategy.js:45:15)
+2026-03-18T19:22:41.973649320Z [err]      at Object.<anonymous> (/app/src/config/passport.js:7:14)
+2026-03-18T19:22:41.973652799Z [err]      at Module._compile (node:internal/modules/cjs/loader:1705:14)
+2026-03-18T19:22:41.973657830Z [err]      at Object..js (node:internal/modules/cjs/loader:1838:10)
+2026-03-18T19:22:41.973661475Z [err]      at Module.load (node:internal/modules/cjs/loader:1441:32)
+2026-03-18T19:22:41.973665259Z [err]      at Function._load (node:internal/modules/cjs/loader:1263:12)
+2026-03-18T19:22:41.973669120Z [err]      at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+2026-03-18T19:22:41.973672727Z [err]      at wrapModuleLoad (node:internal/modules/cjs/loader:237:24)
+2026-03-18T19:22:41.973677909Z [err]      at Module.require (node:internal/modules/cjs/loader:1463:12)
+2026-03-18T19:22:41.973681982Z [err]      at require (node:internal/modules/helpers:147:16)
+2026-03-18T19:22:41.973685633Z [err]  
+2026-03-18T19:22:41.973689242Z [err]  Node.js v22.22.1
+2026-03-18T19:22:46.450775857Z [inf]  > node src/index.js
+2026-03-18T19:22:46.450786741Z [inf]  
+2026-03-18T19:22:46.450870041Z [err]  npm warn config production Use `--omit=dev` instead.
+2026-03-18T19:22:46.450873449Z [inf]  
+2026-03-18T19:22:46.450876731Z [inf]  > cloes-backend@1.0.0 start
+2026-03-18T19:22:46.645926053Z [err]  /app/node_modules/passport-jwt/lib/strategy.js:45
+2026-03-18T19:22:46.645932967Z [err]          throw new TypeError('JwtStrategy requires a secret or key');
+2026-03-18T19:22:46.645938140Z [err]          ^
+2026-03-18T19:22:46.645942368Z [err]  
+2026-03-18T19:22:46.645952893Z [err]  TypeError: JwtStrategy requires a secret or key
+2026-03-18T19:22:46.645956793Z [err]      at new JwtStrategy (/app/node_modules/passport-jwt/lib/strategy.js:45:15)
+2026-03-18T19:22:46.645960205Z [err]      at Object.<anonymous> (/app/src/config/passport.js:7:14)
+2026-03-18T19:22:46.645963210Z [err]      at Module._compile (node:internal/modules/cjs/loader:1705:14)
+2026-03-18T19:22:46.645966077Z [err]      at Object..js (node:internal/modules/cjs/loader:1838:10)
+2026-03-18T19:22:46.645969063Z [err]      at Module.load (node:internal/modules/cjs/loader:1441:32)
+2026-03-18T19:22:46.645973368Z [err]      at Function._load (node:internal/modules/cjs/loader:1263:12)
+2026-03-18T19:22:46.645976217Z [err]      at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+2026-03-18T19:22:46.645979295Z [err]      at wrapModuleLoad (node:internal/modules/cjs/loader:237:24)
+2026-03-18T19:22:46.645982399Z [err]      at Module.require (node:internal/modules/cjs/loader:1463:12)
+2026-03-18T19:22:46.645985771Z [err]      at require (node:internal/modules/helpers:147:16)
+2026-03-18T19:22:46.645990242Z [err]  
+2026-03-18T19:22:46.645993252Z [err]  Node.js v22.22.1
+2026-03-18T19:22:47.824649805Z [err]  npm warn config production Use `--omit=dev` instead.
+2026-03-18T19:22:47.842888828Z [inf]  
+2026-03-18T19:22:47.842897595Z [inf]  > cloes-backend@1.0.0 start
+2026-03-18T19:22:47.842902785Z [inf]  > node src/index.js
+2026-03-18T19:22:47.842908273Z [inf]  
+2026-03-18T19:22:48.432594776Z [err]  
+2026-03-18T19:22:48.432601934Z [err]  Node.js v22.22.1
+2026-03-18T19:22:48.432604133Z [err]  /app/node_modules/passport-jwt/lib/strategy.js:45
+2026-03-18T19:22:48.432607213Z [err]          throw new TypeError('JwtStrategy requires a secret or key');
+2026-03-18T19:22:48.432610545Z [err]          ^
+2026-03-18T19:22:48.432617196Z [err]      at wrapModuleLoad (node:internal/modules/cjs/loader:237:24)
+2026-03-18T19:22:48.432619647Z [err]  
+2026-03-18T19:22:48.432624340Z [err]  TypeError: JwtStrategy requires a secret or key
+2026-03-18T19:22:48.432626133Z [err]      at Module.require (node:internal/modules/cjs/loader:1463:12)
+2026-03-18T19:22:48.432630213Z [err]      at new JwtStrategy (/app/node_modules/passport-jwt/lib/strategy.js:45:15)
+2026-03-18T19:22:48.432634046Z [err]      at require (node:internal/modules/helpers:147:16)
+2026-03-18T19:22:48.432636085Z [err]      at Object.<anonymous> (/app/src/config/passport.js:7:14)
+2026-03-18T19:22:48.432637094Z [err]      at Module._compile (node:internal/modules/cjs/loader:1705:14)
+2026-03-18T19:22:48.432645129Z [err]      at Object..js (node:internal/modules/cjs/loader:1838:10)
+2026-03-18T19:22:48.432650043Z [err]      at Module.load (node:internal/modules/cjs/loader:1441:32)
+2026-03-18T19:22:48.432655453Z [err]      at Function._load (node:internal/modules/cjs/loader:1263:12)
+2026-03-18T19:22:48.432658788Z [err]      at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+2026-03-18T19:22:48.738359126Z [err]  npm warn config production Use `--omit=dev` instead.
+2026-03-18T19:22:48.753483713Z [inf]  
+2026-03-18T19:22:48.753488049Z [inf]  > cloes-backend@1.0.0 start
+2026-03-18T19:22:48.753492155Z [inf]  > node src/index.js
+2026-03-18T19:22:48.753495769Z [inf]  
+2026-03-18T19:22:49.451971260Z [err]  /app/node_modules/passport-jwt/lib/strategy.js:45
+2026-03-18T19:22:49.451974713Z [err]          throw new TypeError('JwtStrategy requires a secret or key');
+2026-03-18T19:22:49.451978317Z [err]          ^
+2026-03-18T19:22:49.451982510Z [err]  
+2026-03-18T19:22:49.451986392Z [err]  TypeError: JwtStrategy requires a secret or key
+2026-03-18T19:22:49.451990327Z [err]      at new JwtStrategy (/app/node_modules/passport-jwt/lib/strategy.js:45:15)
+2026-03-18T19:22:49.451993781Z [err]      at Object.<anonymous> (/app/src/config/passport.js:7:14)
+2026-03-18T19:22:49.451997633Z [err]      at Module._compile (node:internal/modules/cjs/loader:1705:14)
+2026-03-18T19:22:49.452001719Z [err]      at Object..js (node:internal/modules/cjs/loader:1838:10)
+2026-03-18T19:22:49.452005471Z [err]      at Module.load (node:internal/modules/cjs/loader:1441:32)
+2026-03-18T19:22:49.452009327Z [err]      at Function._load (node:internal/modules/cjs/loader:1263:12)
+2026-03-18T19:22:49.452013512Z [err]      at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+2026-03-18T19:22:49.452017336Z [err]      at wrapModuleLoad (node:internal/modules/cjs/loader:237:24)
+2026-03-18T19:22:49.452021191Z [err]      at Module.require (node:internal/modules/cjs/loader:1463:12)
+2026-03-18T19:22:49.452025827Z [err]      at require (node:internal/modules/helpers:147:16)
+2026-03-18T19:22:49.452031055Z [err]  
+2026-03-18T19:22:49.452035021Z [err]  Node.js v22.22.1
+2026-03-18T19:22:49.787836870Z [err]  npm warn config production Use `--omit=dev` instead.
+2026-03-18T19:22:49.807038082Z [inf]  
+2026-03-18T19:22:49.807047411Z [inf]  > cloes-backend@1.0.0 start
+2026-03-18T19:22:49.807051045Z [inf]  > node src/index.js
+2026-03-18T19:22:49.807054810Z [inf]  
+2026-03-18T19:22:50.464575605Z [err]      at Module.require (node:internal/modules/cjs/loader:1463:12)
+2026-03-18T19:22:50.464583071Z [err]      at require (node:internal/modules/helpers:147:16)
+2026-03-18T19:22:50.464587455Z [err]  
+2026-03-18T19:22:50.464591176Z [err]  Node.js v22.22.1
+2026-03-18T19:22:50.464625659Z [err]  /app/node_modules/passport-jwt/lib/strategy.js:45
+2026-03-18T19:22:50.464629052Z [err]          throw new TypeError('JwtStrategy requires a secret or key');
+2026-03-18T19:22:50.464633291Z [err]          ^
+2026-03-18T19:22:50.464637189Z [err]  
+2026-03-18T19:22:50.464640535Z [err]  TypeError: JwtStrategy requires a secret or key
+2026-03-18T19:22:50.464643845Z [err]      at new JwtStrategy (/app/node_modules/passport-jwt/lib/strategy.js:45:15)
+2026-03-18T19:22:50.464647163Z [err]      at Object.<anonymous> (/app/src/config/passport.js:7:14)
+2026-03-18T19:22:50.464651001Z [err]      at Module._compile (node:internal/modules/cjs/loader:1705:14)
+2026-03-18T19:22:50.464654266Z [err]      at Object..js (node:internal/modules/cjs/loader:1838:10)
+2026-03-18T19:22:50.464657647Z [err]      at Module.load (node:internal/modules/cjs/loader:1441:32)
+2026-03-18T19:22:50.464661231Z [err]      at Function._load (node:internal/modules/cjs/loader:1263:12)
+2026-03-18T19:22:50.464667562Z [err]      at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+2026-03-18T19:22:50.464671405Z [err]      at wrapModuleLoad (node:internal/modules/cjs/loader:237:24)
+2026-03-18T19:22:50.793047382Z [err]  npm warn config production Use `--omit=dev` instead.
+2026-03-18T19:22:50.800172363Z [inf]  
+2026-03-18T19:22:50.800176750Z [inf]  > cloes-backend@1.0.0 start
+2026-03-18T19:22:50.800180261Z [inf]  > node src/index.js
+2026-03-18T19:22:50.800184184Z [inf]  
+2026-03-18T19:22:51.491019545Z [err]          throw new TypeError('JwtStrategy requires a secret or key');
+2026-03-18T19:22:51.491028676Z [err]          ^
+2026-03-18T19:22:51.491044653Z [err]      at Module._compile (node:internal/modules/cjs/loader:1705:14)
+2026-03-18T19:22:51.491047245Z [err]      at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+2026-03-18T19:22:51.491054193Z [err]      at Object..js (node:internal/modules/cjs/loader:1838:10)
+2026-03-18T19:22:51.491056952Z [err]      at wrapModuleLoad (node:internal/modules/cjs/loader:237:24)
+2026-03-18T19:22:51.491057696Z [err]  
+2026-03-18T19:22:51.491058079Z [err]  /app/node_modules/passport-jwt/lib/strategy.js:45
+2026-03-18T19:22:51.491058347Z [err]      at Module.load (node:internal/modules/cjs/loader:1441:32)
+2026-03-18T19:22:51.491066436Z [err]      at Module.require (node:internal/modules/cjs/loader:1463:12)
+2026-03-18T19:22:51.491066729Z [err]  Node.js v22.22.1
+2026-03-18T19:22:51.491071392Z [err]      at Function._load (node:internal/modules/cjs/loader:1263:12)
+2026-03-18T19:22:51.491077639Z [err]      at require (node:internal/modules/helpers:147:16)
+2026-03-18T19:22:51.491079333Z [err]  
+2026-03-18T19:22:51.491083498Z [err]  TypeError: JwtStrategy requires a secret or key
+2026-03-18T19:22:51.491099817Z [err]      at new JwtStrategy (/app/node_modules/passport-jwt/lib/strategy.js:45:15)
+2026-03-18T19:22:51.491108859Z [err]      at Object.<anonymous> (/app/src/config/passport.js:7:14)
+2026-03-18T19:22:51.779926371Z [err]  npm warn config production Use `--omit=dev` instead.
+2026-03-18T19:22:51.795532472Z [inf]  
+2026-03-18T19:22:51.795542945Z [inf]  > cloes-backend@1.0.0 start
+2026-03-18T19:22:51.795548990Z [inf]  > node src/index.js
+2026-03-18T19:22:51.795554938Z [inf]  
+2026-03-18T19:22:52.473229442Z [err]      at Module._compile (node:internal/modules/cjs/loader:1705:14)
+2026-03-18T19:22:52.473240755Z [err]      at Object..js (node:internal/modules/cjs/loader:1838:10)
+2026-03-18T19:22:52.473244815Z [err]      at Module.load (node:internal/modules/cjs/loader:1441:32)
+2026-03-18T19:22:52.473247837Z [err]      at Function._load (node:internal/modules/cjs/loader:1263:12)
+2026-03-18T19:22:52.473251010Z [err]      at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+2026-03-18T19:22:52.473254086Z [err]      at wrapModuleLoad (node:internal/modules/cjs/loader:237:24)
+2026-03-18T19:22:52.473257049Z [err]      at Module.require (node:internal/modules/cjs/loader:1463:12)
+2026-03-18T19:22:52.473260379Z [err]      at require (node:internal/modules/helpers:147:16)
+2026-03-18T19:22:52.473264411Z [err]  
+2026-03-18T19:22:52.473268348Z [err]  Node.js v22.22.1
+2026-03-18T19:22:52.473308920Z [err]  /app/node_modules/passport-jwt/lib/strategy.js:45
+2026-03-18T19:22:52.473312807Z [err]          throw new TypeError('JwtStrategy requires a secret or key');
+2026-03-18T19:22:52.473316544Z [err]          ^
+2026-03-18T19:22:52.473320350Z [err]  
+2026-03-18T19:22:52.473324155Z [err]  TypeError: JwtStrategy requires a secret or key
+2026-03-18T19:22:52.473327847Z [err]      at new JwtStrategy (/app/node_modules/passport-jwt/lib/strategy.js:45:15)
+2026-03-18T19:22:52.473331677Z [err]      at Object.<anonymous> (/app/src/config/passport.js:7:14)
+2026-03-18T19:45:33.079063080Z [err]          ^
+2026-03-18T19:45:33.079070526Z [err]  
+2026-03-18T19:45:33.079074458Z [err]  TypeError: JwtStrategy requires a secret or key
+2026-03-18T19:45:33.079078015Z [err]      at new JwtStrategy (/app/node_modules/passport-jwt/lib/strategy.js:45:15)
+2026-03-18T19:45:33.079081638Z [err]      at Object.<anonymous> (/app/src/config/passport.js:7:14)
+2026-03-18T19:45:33.079085553Z [err]      at Module._compile (node:internal/modules/cjs/loader:1705:14)
+2026-03-18T19:45:33.079089132Z [err]      at Object..js (node:internal/modules/cjs/loader:1838:10)
+2026-03-18T19:45:33.079093512Z [err]      at Module.load (node:internal/modules/cjs/loader:1441:32)
+2026-03-18T19:45:33.079096664Z [err]      at Function._load (node:internal/modules/cjs/loader:1263:12)
+2026-03-18T19:45:33.079100002Z [err]      at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+2026-03-18T19:45:33.079103770Z [err]      at wrapModuleLoad (node:internal/modules/cjs/loader:237:24)
+2026-03-18T19:45:33.079107238Z [err]      at Module.require (node:internal/modules/cjs/loader:1463:12)
+2026-03-18T19:45:33.079110767Z [err]      at require (node:internal/modules/helpers:147:16)
+2026-03-18T19:45:33.079114627Z [err]  
+2026-03-18T19:45:33.079118626Z [err]  Node.js v22.22.1
+2026-03-18T19:45:33.079121614Z [err]  npm warn config production Use `--omit=dev` instead.
+2026-03-18T19:45:33.079124482Z [inf]  
+2026-03-18T19:45:33.079183898Z [err]  npm warn config production Use `--omit=dev` instead.
+2026-03-18T19:45:33.079186494Z [inf]  
+2026-03-18T19:45:33.079189242Z [inf]  > cloes-backend@1.0.0 start
+2026-03-18T19:45:33.079192210Z [inf]  > node src/index.js
+2026-03-18T19:45:33.079195061Z [inf]  
+2026-03-18T19:45:33.079197795Z [err]  /app/node_modules/passport-jwt/lib/strategy.js:45
+2026-03-18T19:45:33.079200429Z [err]          throw new TypeError('JwtStrategy requires a secret or key');
+2026-03-18T19:45:33.080582422Z [err]      at Object..js (node:internal/modules/cjs/loader:1838:10)
+2026-03-18T19:45:33.080586961Z [err]      at Module.load (node:internal/modules/cjs/loader:1441:32)
+2026-03-18T19:45:33.080590387Z [err]      at Function._load (node:internal/modules/cjs/loader:1263:12)
+2026-03-18T19:45:33.080592282Z [inf]  
+2026-03-18T19:45:33.080594194Z [err]      at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+2026-03-18T19:45:33.080598141Z [err]      at wrapModuleLoad (node:internal/modules/cjs/loader:237:24)
+2026-03-18T19:45:33.080600698Z [inf]  > cloes-backend@1.0.0 start
+2026-03-18T19:45:33.080604895Z [err]      at Module.require (node:internal/modules/cjs/loader:1463:12)
+2026-03-18T19:45:33.080609001Z [inf]  > node src/index.js
+2026-03-18T19:45:33.080611289Z [err]      at require (node:internal/modules/helpers:147:16)
+2026-03-18T19:45:33.080611545Z [inf]  > cloes-backend@1.0.0 start
+2026-03-18T19:45:33.080617822Z [inf]  
+2026-03-18T19:45:33.080618102Z [err]  
+2026-03-18T19:45:33.080619221Z [inf]  > node src/index.js
+2026-03-18T19:45:33.080625273Z [err]  Node.js v22.22.1
+2026-03-18T19:45:33.080626053Z [inf]  
+2026-03-18T19:45:33.080630725Z [err]  npm warn config production Use `--omit=dev` instead.
+2026-03-18T19:45:33.080630902Z [err]  /app/node_modules/passport-jwt/lib/strategy.js:45
+2026-03-18T19:45:33.080635159Z [err]          throw new TypeError('JwtStrategy requires a secret or key');
+2026-03-18T19:45:33.080638054Z [err]          ^
+2026-03-18T19:45:33.080641476Z [err]  
+2026-03-18T19:45:33.080645196Z [err]  TypeError: JwtStrategy requires a secret or key
+2026-03-18T19:45:33.080648232Z [err]      at new JwtStrategy (/app/node_modules/passport-jwt/lib/strategy.js:45:15)
+2026-03-18T19:45:33.080651243Z [err]      at Object.<anonymous> (/app/src/config/passport.js:7:14)
+2026-03-18T19:45:33.080655393Z [err]      at Module._compile (node:internal/modules/cjs/loader:1705:14)
+2026-03-18T19:45:33.082745993Z [inf]  > cloes-backend@1.0.0 start
+2026-03-18T19:45:33.082750206Z [inf]  > node src/index.js
+2026-03-18T19:45:33.082753343Z [inf]  
+2026-03-18T19:45:33.082756129Z [err]  /app/node_modules/passport-jwt/lib/strategy.js:45
+2026-03-18T19:45:33.082760431Z [err]          throw new TypeError('JwtStrategy requires a secret or key');
+2026-03-18T19:45:33.082766449Z [err]  /app/node_modules/passport-jwt/lib/strategy.js:45
+2026-03-18T19:45:33.082770833Z [err]          throw new TypeError('JwtStrategy requires a secret or key');
+2026-03-18T19:45:33.082773823Z [err]          ^
+2026-03-18T19:45:33.082777320Z [err]  
+2026-03-18T19:45:33.082781352Z [err]  TypeError: JwtStrategy requires a secret or key
+2026-03-18T19:45:33.082784513Z [err]      at new JwtStrategy (/app/node_modules/passport-jwt/lib/strategy.js:45:15)
+2026-03-18T19:45:33.082787678Z [err]      at Object.<anonymous> (/app/src/config/passport.js:7:14)
+2026-03-18T19:45:33.082791237Z [err]      at Module._compile (node:internal/modules/cjs/loader:1705:14)
+2026-03-18T19:45:33.082795114Z [err]      at Object..js (node:internal/modules/cjs/loader:1838:10)
+2026-03-18T19:45:33.082798025Z [err]      at Module.load (node:internal/modules/cjs/loader:1441:32)
+2026-03-18T19:45:33.082801178Z [err]      at Function._load (node:internal/modules/cjs/loader:1263:12)
+2026-03-18T19:45:33.082804132Z [err]      at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+2026-03-18T19:45:33.082807018Z [err]      at wrapModuleLoad (node:internal/modules/cjs/loader:237:24)
+2026-03-18T19:45:33.082810006Z [err]      at Module.require (node:internal/modules/cjs/loader:1463:12)
+2026-03-18T19:45:33.082813118Z [err]      at require (node:internal/modules/helpers:147:16)
+2026-03-18T19:45:33.082815949Z [err]  
+2026-03-18T19:45:33.082819601Z [err]  Node.js v22.22.1
+2026-03-18T19:45:33.082822529Z [err]  npm warn config production Use `--omit=dev` instead.
+2026-03-18T19:45:33.082826894Z [inf]  
+2026-03-18T19:45:33.084970338Z [err]          ^
+2026-03-18T19:45:33.084973956Z [err]  
+2026-03-18T19:45:33.084976999Z [err]  TypeError: JwtStrategy requires a secret or key
+2026-03-18T19:45:33.084983883Z [err]          ^
+2026-03-18T19:45:33.084986919Z [err]  
+2026-03-18T19:45:33.084989938Z [err]  TypeError: JwtStrategy requires a secret or key
+2026-03-18T19:45:33.084997784Z [err]      at new JwtStrategy (/app/node_modules/passport-jwt/lib/strategy.js:45:15)
+2026-03-18T19:45:33.085002139Z [err]      at Object.<anonymous> (/app/src/config/passport.js:7:14)
+2026-03-18T19:45:33.085005590Z [err]      at Module._compile (node:internal/modules/cjs/loader:1705:14)
+2026-03-18T19:45:33.085008950Z [err]      at Object..js (node:internal/modules/cjs/loader:1838:10)
+2026-03-18T19:45:33.085012920Z [err]      at Module.load (node:internal/modules/cjs/loader:1441:32)
+2026-03-18T19:45:33.085016031Z [err]      at Function._load (node:internal/modules/cjs/loader:1263:12)
+2026-03-18T19:45:33.085018986Z [err]      at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+2026-03-18T19:45:33.085023232Z [err]      at wrapModuleLoad (node:internal/modules/cjs/loader:237:24)
+2026-03-18T19:45:33.085026301Z [err]      at Module.require (node:internal/modules/cjs/loader:1463:12)
+2026-03-18T19:45:33.085029092Z [err]      at require (node:internal/modules/helpers:147:16)
+2026-03-18T19:45:33.085033011Z [err]  
+2026-03-18T19:45:33.085036148Z [err]  Node.js v22.22.1
+2026-03-18T19:45:33.085039011Z [err]  npm warn config production Use `--omit=dev` instead.
+2026-03-18T19:45:33.085041975Z [inf]  
+2026-03-18T19:45:33.085045178Z [inf]  > cloes-backend@1.0.0 start
+2026-03-18T19:45:33.085048237Z [inf]  > node src/index.js
+2026-03-18T19:45:33.085051027Z [inf]  
+2026-03-18T19:45:33.085054109Z [err]  /app/node_modules/passport-jwt/lib/strategy.js:45
+2026-03-18T19:45:33.085057526Z [err]          throw new TypeError('JwtStrategy requires a secret or key');
+2026-03-18T19:45:33.087101720Z [err]      at Object.<anonymous> (/app/src/config/passport.js:7:14)
+2026-03-18T19:45:33.087109425Z [err]          ^
+2026-03-18T19:45:33.087109494Z [inf]  > node src/index.js
+2026-03-18T19:45:33.087114710Z [err]  
+2026-03-18T19:45:33.087116598Z [inf]  
+2026-03-18T19:45:33.087117818Z [err]      at new JwtStrategy (/app/node_modules/passport-jwt/lib/strategy.js:45:15)
+2026-03-18T19:45:33.087120647Z [err]  TypeError: JwtStrategy requires a secret or key
+2026-03-18T19:45:33.087124249Z [err]  /app/node_modules/passport-jwt/lib/strategy.js:45
+2026-03-18T19:45:33.087128987Z [err]      at new JwtStrategy (/app/node_modules/passport-jwt/lib/strategy.js:45:15)
+2026-03-18T19:45:33.087129119Z [err]      at Object.<anonymous> (/app/src/config/passport.js:7:14)
+2026-03-18T19:45:33.087131627Z [err]      at require (node:internal/modules/helpers:147:16)
+2026-03-18T19:45:33.087132347Z [err]          throw new TypeError('JwtStrategy requires a secret or key');
+2026-03-18T19:45:33.087136291Z [err]      at Module._compile (node:internal/modules/cjs/loader:1705:14)
+2026-03-18T19:45:33.087140461Z [err]  
+2026-03-18T19:45:33.087144405Z [err]      at Object..js (node:internal/modules/cjs/loader:1838:10)
+2026-03-18T19:45:33.087145407Z [err]  Node.js v22.22.1
+2026-03-18T19:45:33.087151383Z [err]  npm warn config production Use `--omit=dev` instead.
+2026-03-18T19:45:33.087151531Z [err]      at Module.load (node:internal/modules/cjs/loader:1441:32)
+2026-03-18T19:45:33.087157017Z [inf]  
+2026-03-18T19:45:33.087159995Z [err]      at Function._load (node:internal/modules/cjs/loader:1263:12)
+2026-03-18T19:45:33.087161996Z [inf]  > cloes-backend@1.0.0 start
+2026-03-18T19:45:33.087164673Z [err]      at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+2026-03-18T19:45:33.087167957Z [err]      at wrapModuleLoad (node:internal/modules/cjs/loader:237:24)
+2026-03-18T19:45:33.087172243Z [err]      at Module.require (node:internal/modules/cjs/loader:1463:12)
+2026-03-18T19:45:33.089038587Z [err]      at Module._compile (node:internal/modules/cjs/loader:1705:14)
+2026-03-18T19:45:33.089042777Z [err]      at Object..js (node:internal/modules/cjs/loader:1838:10)
+2026-03-18T19:45:33.089045847Z [err]      at Module.load (node:internal/modules/cjs/loader:1441:32)
+2026-03-18T19:45:33.089052913Z [err]      at Function._load (node:internal/modules/cjs/loader:1263:12)
+2026-03-18T19:45:33.089056004Z [err]      at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+2026-03-18T19:45:33.089058899Z [err]      at wrapModuleLoad (node:internal/modules/cjs/loader:237:24)
+2026-03-18T19:45:33.089061937Z [err]      at Module.require (node:internal/modules/cjs/loader:1463:12)
+2026-03-18T19:45:33.089064789Z [err]      at require (node:internal/modules/helpers:147:16)
+2026-03-18T19:45:33.089067890Z [err]  
+2026-03-18T19:45:33.089070968Z [err]  Node.js v22.22.1
+2026-03-18T19:45:33.501089064Z [err]  npm warn config production Use `--omit=dev` instead.
+2026-03-18T19:45:33.510669113Z [inf]  
+2026-03-18T19:45:33.510676768Z [inf]  > cloes-backend@1.0.0 start
+2026-03-18T19:45:33.510681559Z [inf]  > node src/index.js
+2026-03-18T19:45:33.510686981Z [inf]  
+2026-03-18T19:45:34.084767518Z [err]      at Object..js (node:internal/modules/cjs/loader:1838:10)
+2026-03-18T19:45:34.084767880Z [err]      at require (node:internal/modules/helpers:147:16)
+2026-03-18T19:45:34.084773487Z [err]      at Module.load (node:internal/modules/cjs/loader:1441:32)
+2026-03-18T19:45:34.084778607Z [err]      at Function._load (node:internal/modules/cjs/loader:1263:12)
+2026-03-18T19:45:34.084783354Z [err]  
+2026-03-18T19:45:34.084788348Z [err]  Node.js v22.22.1
+2026-03-18T19:45:34.084789489Z [err]  /app/node_modules/passport-jwt/lib/strategy.js:45
+2026-03-18T19:45:34.084795272Z [err]          throw new TypeError('JwtStrategy requires a secret or key');
+2026-03-18T19:45:34.084797294Z [err]  TypeError: JwtStrategy requires a secret or key
+2026-03-18T19:45:34.084801288Z [err]          ^
+2026-03-18T19:45:34.084802637Z [err]      at new JwtStrategy (/app/node_modules/passport-jwt/lib/strategy.js:45:15)
+2026-03-18T19:45:34.084805476Z [err]      at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+2026-03-18T19:45:34.084806744Z [err]  
+2026-03-18T19:45:34.084807420Z [err]      at Object.<anonymous> (/app/src/config/passport.js:7:14)
+2026-03-18T19:45:34.084815771Z [err]      at Module._compile (node:internal/modules/cjs/loader:1705:14)
+2026-03-18T19:45:34.084816526Z [err]      at wrapModuleLoad (node:internal/modules/cjs/loader:237:24)
+2026-03-18T19:45:34.084821415Z [err]      at Module.require (node:internal/modules/cjs/loader:1463:12)
+2026-03-18T19:45:34.514940259Z [err]  npm warn config production Use `--omit=dev` instead.
+2026-03-18T19:45:34.530235883Z [inf]  
+2026-03-18T19:45:34.530241169Z [inf]  > cloes-backend@1.0.0 start
+2026-03-18T19:45:34.530244856Z [inf]  > node src/index.js
+2026-03-18T19:45:34.530248336Z [inf]  
+2026-03-18T19:45:35.097513991Z [err]  Node.js v22.22.1
+2026-03-18T19:45:35.097514701Z [err]      at Module._compile (node:internal/modules/cjs/loader:1705:14)
+2026-03-18T19:45:35.097521949Z [err]      at Object..js (node:internal/modules/cjs/loader:1838:10)
+2026-03-18T19:45:35.097529633Z [err]      at Function._load (node:internal/modules/cjs/loader:1263:12)
+2026-03-18T19:45:35.097529681Z [err]      at Module.load (node:internal/modules/cjs/loader:1441:32)
+2026-03-18T19:45:35.097535325Z [err]      at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+2026-03-18T19:45:35.097539605Z [err]  /app/node_modules/passport-jwt/lib/strategy.js:45
+2026-03-18T19:45:35.097543745Z [err]      at wrapModuleLoad (node:internal/modules/cjs/loader:237:24)
+2026-03-18T19:45:35.097544577Z [err]  TypeError: JwtStrategy requires a secret or key
+2026-03-18T19:45:35.097547838Z [err]          throw new TypeError('JwtStrategy requires a secret or key');
+2026-03-18T19:45:35.097553167Z [err]      at new JwtStrategy (/app/node_modules/passport-jwt/lib/strategy.js:45:15)
+2026-03-18T19:45:35.097556037Z [err]          ^
+2026-03-18T19:45:35.097560501Z [err]      at Module.require (node:internal/modules/cjs/loader:1463:12)
+2026-03-18T19:45:35.097562360Z [err]      at Object.<anonymous> (/app/src/config/passport.js:7:14)
+2026-03-18T19:45:35.097564577Z [err]  
+2026-03-18T19:45:35.097568884Z [err]      at require (node:internal/modules/helpers:147:16)
+2026-03-18T19:45:35.097574769Z [err]  
+2026-03-18T19:45:35.606969807Z [err]  npm warn config production Use `--omit=dev` instead.
+2026-03-18T19:45:35.614265868Z [inf]  
+2026-03-18T19:45:35.614271052Z [inf]  > cloes-backend@1.0.0 start
+2026-03-18T19:45:35.614275095Z [inf]  > node src/index.js
+2026-03-18T19:45:35.614279331Z [inf]  
+2026-03-18T19:45:36.096076451Z [err]  Node.js v22.22.1
+2026-03-18T19:45:36.096087800Z [err]      at Object.<anonymous> (/app/src/config/passport.js:7:14)
+2026-03-18T19:45:36.096092035Z [err]      at Module._compile (node:internal/modules/cjs/loader:1705:14)
+2026-03-18T19:45:36.096096398Z [err]      at Object..js (node:internal/modules/cjs/loader:1838:10)
+2026-03-18T19:45:36.096104296Z [err]      at Module.load (node:internal/modules/cjs/loader:1441:32)
+2026-03-18T19:45:36.096105493Z [err]  
+2026-03-18T19:45:36.096108530Z [err]          throw new TypeError('JwtStrategy requires a secret or key');
+2026-03-18T19:45:36.096111607Z [err]  /app/node_modules/passport-jwt/lib/strategy.js:45
+2026-03-18T19:45:36.096116285Z [err]          ^
+2026-03-18T19:45:36.096116454Z [err]  TypeError: JwtStrategy requires a secret or key
+2026-03-18T19:45:36.096118742Z [err]      at Function._load (node:internal/modules/cjs/loader:1263:12)
+2026-03-18T19:45:36.096123665Z [err]      at new JwtStrategy (/app/node_modules/passport-jwt/lib/strategy.js:45:15)
+2026-03-18T19:45:36.096123833Z [err]      at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+2026-03-18T19:45:36.096129364Z [err]      at wrapModuleLoad (node:internal/modules/cjs/loader:237:24)
+2026-03-18T19:45:36.096135082Z [err]      at Module.require (node:internal/modules/cjs/loader:1463:12)
+2026-03-18T19:45:36.096141049Z [err]      at require (node:internal/modules/helpers:147:16)
+2026-03-18T19:45:36.096149754Z [err]  
+2026-03-18T19:45:36.593432900Z [err]  npm warn config production Use `--omit=dev` instead.
+2026-03-18T19:45:36.607117197Z [inf]  
+2026-03-18T19:45:36.607124584Z [inf]  > cloes-backend@1.0.0 start
+2026-03-18T19:45:36.607131259Z [inf]  > node src/index.js
+2026-03-18T19:45:36.607135764Z [inf]  
+2026-03-18T19:45:37.238464748Z [err]  /app/node_modules/passport-jwt/lib/strategy.js:45
+2026-03-18T19:45:37.238506375Z [err]          throw new TypeError('JwtStrategy requires a secret or key');
+2026-03-18T19:45:37.238509725Z [err]      at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+2026-03-18T19:45:37.238513490Z [err]          ^
+2026-03-18T19:45:37.238519210Z [err]      at wrapModuleLoad (node:internal/modules/cjs/loader:237:24)
+2026-03-18T19:45:37.238521090Z [err]  
+2026-03-18T19:45:37.238525931Z [err]  TypeError: JwtStrategy requires a secret or key
+2026-03-18T19:45:37.238529781Z [err]      at new JwtStrategy (/app/node_modules/passport-jwt/lib/strategy.js:45:15)
+2026-03-18T19:45:37.238534699Z [err]      at Object.<anonymous> (/app/src/config/passport.js:7:14)
+2026-03-18T19:45:37.238537967Z [err]      at Module.require (node:internal/modules/cjs/loader:1463:12)
+2026-03-18T19:45:37.238540637Z [err]      at Module._compile (node:internal/modules/cjs/loader:1705:14)
+2026-03-18T19:45:37.238544681Z [err]      at Object..js (node:internal/modules/cjs/loader:1838:10)
+2026-03-18T19:45:37.238550122Z [err]      at Module.load (node:internal/modules/cjs/loader:1441:32)
+2026-03-18T19:45:37.238552486Z [err]      at require (node:internal/modules/helpers:147:16)
+2026-03-18T19:45:37.238558237Z [err]  
+2026-03-18T19:45:37.238559261Z [err]      at Function._load (node:internal/modules/cjs/loader:1263:12)
+2026-03-18T19:45:37.238563496Z [err]  Node.js v22.22.1
+2026-03-18T19:45:37.643341048Z [err]  npm warn config production Use `--omit=dev` instead.
+2026-03-18T19:45:37.657821363Z [inf]  
+2026-03-18T19:45:37.657825829Z [inf]  > cloes-backend@1.0.0 start
+2026-03-18T19:45:37.657829611Z [inf]  > node src/index.js
+2026-03-18T19:45:37.657832460Z [inf]  
+2026-03-18T19:45:38.140931536Z [err]      at new JwtStrategy (/app/node_modules/passport-jwt/lib/strategy.js:45:15)
+2026-03-18T19:45:38.140943540Z [err]      at Object.<anonymous> (/app/src/config/passport.js:7:14)
+2026-03-18T19:45:38.140949789Z [err]      at Module._compile (node:internal/modules/cjs/loader:1705:14)
+2026-03-18T19:45:38.140955131Z [err]      at Object..js (node:internal/modules/cjs/loader:1838:10)
+2026-03-18T19:45:38.140960903Z [err]      at Module.load (node:internal/modules/cjs/loader:1441:32)
+2026-03-18T19:45:38.140966189Z [err]      at Function._load (node:internal/modules/cjs/loader:1263:12)
+2026-03-18T19:45:38.140970977Z [err]      at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+2026-03-18T19:45:38.140978512Z [err]      at wrapModuleLoad (node:internal/modules/cjs/loader:237:24)
+2026-03-18T19:45:38.140983506Z [err]      at Module.require (node:internal/modules/cjs/loader:1463:12)
+2026-03-18T19:45:38.140988909Z [err]      at require (node:internal/modules/helpers:147:16)
+2026-03-18T19:45:38.140995599Z [err]  
+2026-03-18T19:45:38.141000188Z [err]  Node.js v22.22.1
+2026-03-18T19:45:38.141051199Z [err]  /app/node_modules/passport-jwt/lib/strategy.js:45
+2026-03-18T19:45:38.141054804Z [err]          throw new TypeError('JwtStrategy requires a secret or key');
+2026-03-18T19:45:38.141058949Z [err]          ^
+2026-03-18T19:45:38.141063098Z [err]  
+2026-03-18T19:45:38.141066937Z [err]  TypeError: JwtStrategy requires a secret or key

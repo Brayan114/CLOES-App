@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>CLOES Admin Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.development.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.development.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/recharts/2.8.0/Recharts.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0B0715;color:#F0E8FF;font-family:'DM Sans',sans-serif;min-height:100vh}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:#1A1028}
+::-webkit-scrollbar-thumb{background:#8B5CF6;border-radius:2px}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.spin{animation:spin 0.7s linear infinite}
+.fade{animation:fadeIn 0.3s ease}
+input:focus{outline:none!important;border-color:#8B5CF6!important;box-shadow:0 0 0 2px rgba(139,92,246,0.18)!important}
+button{transition:opacity 0.15s}
+button:hover{opacity:0.82}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useCallback, useRef } = React;
+const { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
+        XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } = Recharts;
+
+// ── COLORS ────────────────────────────────────────────────────────────────────
+const C = {
+  bg:'#0B0715', surface:'#130E22', s2:'#1A1130', border:'#2D1F4A',
+  purple:'#8B5CF6', pink:'#FF3385', cyan:'#33A1FF', mint:'#4DFFD4',
+  gold:'#F59E0B', red:'#EF4444', green:'#22C55E',
+  text:'#F0E8FF', mid:'#C4B0E8', sub:'#7A6A9A',
+};
+const PAL = [C.purple,C.pink,C.cyan,C.mint,C.gold,C.green];
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let TOKEN   = localStorage.getItem('cloes_admin_token') || '';
+let API_URL = localStorage.getItem('cloes_admin_api')   || 'http://localhost:5000/api';
+
+async function req(method, path, body) {
+  const r = await fetch(API_URL + path, {
+    method,
+    headers: { 'Content-Type':'application/json', Authorization:`Bearer ${TOKEN}` },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const d = await r.json().catch(()=>({}));
+  if (!r.ok) throw new Error(d.error || `HTTP ${r.status}`);
+  return d;
+}
+
+// ── UTILS ─────────────────────────────────────────────────────────────────────
+const fmt   = n => n>=1e6?(n/1e6).toFixed(1)+'M':n>=1e3?(n/1e3).toFixed(1)+'K':String(n||0);
+const dstr  = d => new Date(d).toLocaleDateString('en',{month:'short',day:'numeric',year:'numeric'});
+const tstr  = d => new Date(d).toLocaleString('en',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+const week  = data => {
+  const m={}; data.forEach(d=>{m[d._id]=d.count});
+  return Array.from({length:7},(_,i)=>{
+    const dt=new Date(Date.now()-(6-i)*86400000);
+    return {day:dt.toLocaleDateString('en',{weekday:'short'}), count:m[dt.toISOString().split('T')[0]]||0};
+  });
+};
+
+// ── TINY COMPONENTS ───────────────────────────────────────────────────────────
+const Spin = ({s=28}) => <div className="spin" style={{width:s,height:s,border:`3px solid ${C.border}`,borderTop:`3px solid ${C.purple}`,borderRadius:'50%'}}/>;
+const Loader = () => <div style={{display:'flex',justifyContent:'center',padding:80}}><Spin s={36}/></div>;
+
+const Badge = ({text,c}) => (
+  <span style={{background:`${c}22`,color:c,borderRadius:6,padding:'2px 9px',fontSize:11,fontWeight:700,letterSpacing:'0.04em',display:'inline-block'}}>{text}</span>
+);
+
+const Inp = ({style,...p}) => (
+  <input style={{background:C.s2,border:`1px solid ${C.border}`,borderRadius:10,padding:'9px 14px',color:C.text,fontSize:13,fontFamily:'inherit',width:'100%',...style}} {...p}/>
+);
+
+const Lbl = ({children}) => <div style={{fontSize:11,color:C.sub,letterSpacing:'0.08em',textTransform:'uppercase',marginBottom:6}}>{children}</div>;
+
+const Btn = ({children,color=C.purple,ghost,style={},disabled,onClick}) => (
+  <button onClick={onClick} disabled={disabled}
+    style={{background:ghost?'transparent':color,border:ghost?`1px solid ${C.border}`:'none',
+      borderRadius:10,padding:'9px 18px',color:ghost?C.mid:'#fff',fontWeight:600,
+      fontSize:13,cursor:'pointer',fontFamily:'inherit',...style}}>
+    {children}
+  </button>
+);
+
+const Card = ({children,style={}}) => (
+  <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:16,padding:22,...style}}>{children}</div>
+);
+
+const ST = ({children}) => (
+  <div style={{fontSize:11,fontWeight:700,color:C.sub,letterSpacing:'0.1em',textTransform:'uppercase',marginBottom:14}}>{children}</div>
+);
+
+const PH = ({title,sub}) => (
+  <div style={{marginBottom:28}}>
+    <h1 style={{fontSize:26,fontWeight:800,fontFamily:"'Space Mono',monospace",letterSpacing:1}}>{title}</h1>
+    {sub && <p style={{color:C.sub,fontSize:13,marginTop:4}}>{sub}</p>}
+  </div>
+);
+
+const StatCard = ({label,value,sub,color,icon}) => (
+  <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:16,padding:22,position:'relative',overflow:'hidden'}}>
+    <div style={{position:'absolute',top:-20,right:-20,width:70,height:70,borderRadius:'50%',background:`${color}14`}}/>
+    <div style={{fontSize:24,marginBottom:6}}>{icon}</div>
+    <div style={{fontSize:30,fontWeight:800,color,fontFamily:"'Space Mono',monospace",lineHeight:1}}>{value}</div>
+    <div style={{fontSize:13,color:C.sub,marginTop:6}}>{label}</div>
+    {sub && <div style={{fontSize:11,color:`${color}BB`,marginTop:3}}>{sub}</div>}
+  </div>
+);
+
+const Modal = ({title,onClose,children}) => (
+  <div onClick={onClose} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.75)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:200}}>
+    <div onClick={e=>e.stopPropagation()} className="fade" style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:18,padding:28,width:420,maxWidth:'90vw'}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
+        <div style={{fontSize:16,fontWeight:700}}>{title}</div>
+        <button onClick={onClose} style={{background:'none',border:'none',color:C.sub,fontSize:20,cursor:'pointer'}}>✕</button>
+      </div>
+      {children}
+    </div>
+  </div>
+);
+
+const Pager = ({page,total,limit,go}) => {
+  const pages = Math.ceil(total/limit);
+  if (pages<=1) return null;
+  return (
+    <div style={{display:'flex',gap:10,marginTop:20,justifyContent:'center',alignItems:'center'}}>
+      <Btn ghost onClick={()=>go(p=>Math.max(1,p-1))} disabled={page===1} style={{padding:'7px 14px',fontSize:12}}>← Prev</Btn>
+      <span style={{color:C.sub,fontSize:13}}>Page {page} / {pages} &nbsp;·&nbsp; {total.toLocaleString()} total</span>
+      <Btn ghost onClick={()=>go(p=>Math.min(pages,p+1))} disabled={page===pages} style={{padding:'7px 14px',fontSize:12}}>Next →</Btn>
+    </div>
+  );
+};
+
+const Toast = ({msg}) => msg ? (
+  <div style={{position:'fixed',bottom:24,right:24,background:C.purple,color:'#fff',borderRadius:12,padding:'12px 20px',fontWeight:600,fontSize:13,zIndex:300,boxShadow:'0 4px 24px rgba(0,0,0,0.5)',animation:'fadeIn 0.2s ease'}}>
+    {msg}
+  </div>
+) : null;
+
+const useToast = () => {
+  const [msg,setMsg] = useState('');
+  const show = m => { setMsg(m); setTimeout(()=>setMsg(''),2500); };
+  return [msg, show];
+};
+
+const TH = ({children}) => <th style={{padding:'10px 14px',textAlign:'left',fontSize:11,fontWeight:600,letterSpacing:'0.07em',textTransform:'uppercase',color:C.sub,borderBottom:`1px solid ${C.border}`,whiteSpace:'nowrap'}}>{children}</th>;
+const TD = ({children,style={}}) => <td style={{padding:'11px 14px',fontSize:13,color:C.mid,borderBottom:`1px solid ${C.border}20`,...style}}>{children}</td>;
+
+// ══ LOGIN ═════════════════════════════════════════════════════════════════════
+function Login({onLogin}) {
+  const [email,setEmail]   = useState('');
+  const [pass,setPass]     = useState('');
+  const [apiUrl,setApiUrl] = useState(API_URL);
+  const [showApi,setShowApi] = useState(false);
+  const [err,setErr]       = useState('');
+  const [loading,setLoad]  = useState(false);
+
+  const go = async e => {
+    e.preventDefault(); setLoad(true); setErr('');
+    API_URL = apiUrl; localStorage.setItem('cloes_admin_api', apiUrl);
+    try {
+      const d = await req('POST','/auth/login',{email,password:pass});
+      if (!d.user?.isAdmin) { setErr('Not an admin account.\nFix: node make-admin.js '+email); setLoad(false); return; }
+      TOKEN = d.token; localStorage.setItem('cloes_admin_token', d.token);
+      onLogin(d.user);
+    } catch(e){ setErr(e.message); }
+    setLoad(false);
+  };
+
+  return (
+    <div style={{minHeight:'100vh',background:C.bg,display:'flex',alignItems:'center',justifyContent:'center',position:'relative'}}>
+      <div style={{position:'fixed',top:'5%',left:'20%',width:600,height:600,background:`${C.purple}10`,borderRadius:'50%',filter:'blur(140px)',pointerEvents:'none'}}/>
+      <div style={{position:'fixed',bottom:'5%',right:'10%',width:400,height:400,background:`${C.pink}0C`,borderRadius:'50%',filter:'blur(110px)',pointerEvents:'none'}}/>
+
+      <div className="fade" style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:20,padding:36,width:400,maxWidth:'92vw',zIndex:1,position:'relative'}}>
+        <div style={{textAlign:'center',marginBottom:32}}>
+          <div style={{fontSize:38,fontWeight:800,background:`linear-gradient(135deg,${C.purple},${C.pink})`,WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent',letterSpacing:8,fontFamily:"'Space Mono',monospace"}}>CLOES</div>
+          <div style={{color:C.sub,fontSize:11,letterSpacing:'0.18em',marginTop:4}}>ADMIN PORTAL</div>
+        </div>
+
+        <form onSubmit={go} style={{display:'flex',flexDirection:'column',gap:16}}>
+          <div>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
+              <Lbl>Server URL</Lbl>
+              <button type="button" onClick={()=>setShowApi(!showApi)} style={{background:'none',border:'none',color:C.purple,fontSize:11,cursor:'pointer',textDecoration:'underline'}}>{showApi?'hide':'change'}</button>
+            </div>
+            {showApi
+              ? <Inp value={apiUrl} onChange={e=>setApiUrl(e.target.value)} placeholder="http://localhost:5000/api"/>
+              : <div style={{fontSize:11,color:C.sub,background:C.s2,borderRadius:8,padding:'8px 12px',fontFamily:"'Space Mono',monospace",overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{apiUrl}</div>
+            }
+          </div>
+          <div><Lbl>Admin Email</Lbl><Inp type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="admin@cloes.app" required/></div>
+          <div><Lbl>Password</Lbl><Inp type="password" value={pass} onChange={e=>setPass(e.target.value)} placeholder="••••••••" required/></div>
+          {err && <div style={{background:`${C.red}15`,border:`1px solid ${C.red}40`,borderRadius:10,padding:'12px 14px',color:C.red,fontSize:12,lineHeight:1.7,whiteSpace:'pre-wrap'}}>{err}</div>}
+          <Btn disabled={loading} style={{padding:13,background:`linear-gradient(135deg,${C.purple},${C.pink})`,fontSize:14}}>
+            {loading ? <span style={{display:'flex',alignItems:'center',justifyContent:'center',gap:8}}><Spin s={16}/> Signing in…</span> : 'Sign In ✦'}
+          </Btn>
+        </form>
+
+        <div style={{marginTop:20,background:C.s2,borderRadius:10,padding:'14px 16px',fontSize:11,color:C.sub,lineHeight:1.9}}>
+          <strong style={{color:C.mid}}>First time setup:</strong><br/>
+          1. Start backend: <code style={{color:C.purple}}>npm run dev</code><br/>
+          2. Grant access: <code style={{color:C.purple}}>node make-admin.js you@email.com</code><br/>
+          3. Sign in above ✦
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ══ SIDEBAR ═══════════════════════════════════════════════════════════════════
+const NAV = [
+  {id:'dashboard',label:'Dashboard',icon:'◈'},
+  {id:'users',    label:'Users',    icon:'◉'},
+  {id:'messages', label:'Messages', icon:'💬'},
+  {id:'vibes',    label:'Vibes',    icon:'▶'},
+  {id:'coins',    label:'Coins',    icon:'🪙'},
+  {id:'bloom',    label:'Bloom',    icon:'🌸'},
+  {id:'settings', label:'Settings', icon:'⚙'},
+];
+
+function Sidebar({page,setPage,admin,logout}) {
+  return (
+    <nav style={{width:226,background:C.surface,borderRight:`1px solid ${C.border}`,display:'flex',flexDirection:'column',position:'fixed',top:0,left:0,bottom:0,zIndex:50,overflow:'hidden'}}>
+      <div style={{padding:'22px 18px 16px',borderBottom:`1px solid ${C.border}`,flexShrink:0}}>
+        <div style={{fontSize:22,fontWeight:800,background:`linear-gradient(135deg,${C.purple},${C.pink})`,WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent',letterSpacing:6,fontFamily:"'Space Mono',monospace"}}>CLOES</div>
+        <div style={{fontSize:9,color:C.sub,letterSpacing:'0.18em',marginTop:2}}>ADMIN PORTAL v1.0</div>
+      </div>
+
+      <div style={{flex:1,padding:'8px',display:'flex',flexDirection:'column',gap:2,overflowY:'auto'}}>
+        {NAV.map(n => (
+          <button key={n.id} onClick={()=>setPage(n.id)} style={{
+            background:page===n.id?`${C.purple}20`:'transparent',
+            border:page===n.id?`1px solid ${C.purple}3A`:'1px solid transparent',
+            borderRadius:10,padding:'10px 12px',
+            color:page===n.id?C.text:C.sub,
+            cursor:'pointer',display:'flex',alignItems:'center',gap:10,
+            fontFamily:'inherit',fontSize:13,fontWeight:page===n.id?600:400,textAlign:'left',width:'100%',
+          }}>
+            <span style={{fontSize:14,width:20,textAlign:'center',flexShrink:0}}>{n.icon}</span>
+            {n.label}
+            {page===n.id && <div style={{marginLeft:'auto',width:4,height:4,borderRadius:2,background:C.purple}}/>}
+          </button>
+        ))}
+      </div>
+
+      <div style={{padding:'12px',borderTop:`1px solid ${C.border}`,flexShrink:0}}>
+        <div style={{display:'flex',alignItems:'center',gap:9,marginBottom:10}}>
+          <div style={{width:32,height:32,borderRadius:9,background:`linear-gradient(135deg,${C.purple},${C.pink})`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,fontWeight:700,flexShrink:0}}>{admin?.name?.[0]||'A'}</div>
+          <div style={{minWidth:0}}>
+            <div style={{fontSize:13,fontWeight:600,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{admin?.name}</div>
+            <div style={{fontSize:10,color:C.sub}}>Super Admin</div>
+          </div>
+        </div>
+        <Btn ghost onClick={logout} style={{width:'100%',fontSize:12,padding:'7px'}}>Sign Out</Btn>
+      </div>
+    </nav>
+  );
+}
+
+// ══ TOPBAR ════════════════════════════════════════════════════════════════════
+function Topbar() {
+  const [ping,setPing] = useState(null);
+  useEffect(()=>{
+    const check = () => {
+      const t = Date.now();
+      req('GET','/health').then(()=>setPing(Date.now()-t)).catch(()=>setPing(-1));
+    };
+    check();
+    const id = setInterval(check,30000);
+    return ()=>clearInterval(id);
+  },[]);
+  const pcolor = ping===null?C.gold:ping===-1?C.red:C.green;
+  const plabel = ping===null?'Connecting…':ping===-1?'Backend offline':`${ping}ms`;
+  return (
+    <div style={{background:C.surface,borderBottom:`1px solid ${C.border}`,padding:'12px 24px',display:'flex',alignItems:'center',justifyContent:'space-between',position:'sticky',top:0,zIndex:40}}>
+      <div style={{fontSize:13,color:C.sub}}>{new Date().toLocaleDateString('en',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</div>
+      <div style={{display:'flex',alignItems:'center',gap:14}}>
+        <div style={{display:'flex',alignItems:'center',gap:7}}>
+          <div style={{width:7,height:7,borderRadius:'50%',background:pcolor,boxShadow:`0 0 6px ${pcolor}`}}/>
+          <span style={{fontSize:12,color:C.sub}}>{plabel}</span>
+        </div>
+        <div style={{fontFamily:"'Space Mono',monospace",fontSize:10,color:C.sub,background:C.s2,padding:'4px 10px',borderRadius:6,maxWidth:220,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{API_URL.replace('/api','')}</div>
+      </div>
+    </div>
+  );
+}
+
+// ══ DASHBOARD ════════════════════════════════════════════════════════════════
+function Dashboard() {
+  const [d,setD]         = useState(null);
+  const [loading,setL]   = useState(true);
+  const [err,setErr]     = useState('');
+
+  useEffect(()=>{
+    req('GET','/admin/stats').then(r=>{setD(r);setL(false)}).catch(e=>{setErr(e.message);setL(false)});
+  },[]);
+
+  if (loading) return <Loader/>;
+  if (err) return (
+    <div style={{padding:28}}>
+      <PH title="Dashboard" sub=""/>
+      <Card style={{borderColor:`${C.red}40`,background:`${C.red}10`}}>
+        <div style={{color:C.red,lineHeight:1.9,fontSize:14}}>
+          <strong>Cannot load stats:</strong> {err}<br/><br/>
+          Make sure the backend is running at <code style={{background:C.s2,padding:'2px 6px',borderRadius:4,fontSize:12}}>{API_URL}</code><br/>
+          and that it was restarted after admin routes were added (admin route must be in index.js).
+        </div>
+      </Card>
+    </div>
+  );
+  if (!d) return null;
+  const {totals:t,charts:ch} = d;
+
+  return (
+    <div style={{padding:28}} className="fade">
+      <PH title="Dashboard" sub="Real-time overview of your CLOES universe"/>
+
+      <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:14,marginBottom:16}}>
+        <StatCard label="Total Users"    value={fmt(t.users)}        sub={`+${t.newUsersToday} today`} color={C.purple} icon="◉"/>
+        <StatCard label="Online Now"     value={t.onlineUsers}        sub="Live right now"               color={C.green}  icon="🟢"/>
+        <StatCard label="Total Messages" value={fmt(t.messages)}      sub={`${t.messagesToday} today`}   color={C.cyan}   icon="💬"/>
+        <StatCard label="Vibe Videos"    value={fmt(t.vibes)}         sub="Uploaded"                     color={C.pink}   icon="▶"/>
+      </div>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:14,marginBottom:22}}>
+        <StatCard label="Coins Awarded"  value={fmt(t.coins)}         sub="All time"      color={C.gold}   icon="🪙"/>
+        <StatCard label="Conversations"  value={fmt(t.conversations)} sub="Total threads" color={C.mint}   icon="✦"/>
+        <StatCard label="Messages Today" value={t.messagesToday}      sub="Last 24 hours" color={C.purple} icon="⚡"/>
+      </div>
+
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:18,marginBottom:18}}>
+        <Card>
+          <ST>User Growth — Last 7 Days</ST>
+          <ResponsiveContainer width="100%" height={180}>
+            <BarChart data={week(ch.userGrowth)} margin={{top:5,right:5,bottom:5,left:-22}}>
+              <CartesianGrid strokeDasharray="3 3" stroke={C.border}/>
+              <XAxis dataKey="day" tick={{fill:C.sub,fontSize:11}}/>
+              <YAxis tick={{fill:C.sub,fontSize:11}} allowDecimals={false}/>
+              <Tooltip contentStyle={{background:C.s2,border:`1px solid ${C.border}`,borderRadius:8,color:C.text,fontSize:12}}/>
+              <Bar dataKey="count" fill={C.purple} radius={[4,4,0,0]}/>
+            </BarChart>
+          </ResponsiveContainer>
+        </Card>
+        <Card>
+          <ST>Message Activity — Last 7 Days</ST>
+          <ResponsiveContainer width="100%" height={180}>
+            <LineChart data={week(ch.msgActivity)} margin={{top:5,right:5,bottom:5,left:-22}}>
+              <CartesianGrid strokeDasharray="3 3" stroke={C.border}/>
+              <XAxis dataKey="day" tick={{fill:C.sub,fontSize:11}}/>
+              <YAxis tick={{fill:C.sub,fontSize:11}} allowDecimals={false}/>
+              <Tooltip contentStyle={{background:C.s2,border:`1px solid ${C.border}`,borderRadius:8,color:C.text,fontSize:12}}/>
+              <Line type="monotone" dataKey="count" stroke={C.pink} strokeWidth={2.5} dot={{fill:C.pink,r:3}}/>
+            </LineChart>
+          </ResponsiveContainer>
+        </Card>
+      </div>
+
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:18}}>
+        <Card>
+          <ST>Auth Provider Breakdown</ST>
+          <div style={{display:'flex',alignItems:'center',gap:16}}>
+            <ResponsiveContainer width={150} height={150}>
+              <PieChart>
+                <Pie data={ch.authBreakdown.map(a=>({name:a._id||'local',value:a.count}))} cx="50%" cy="50%" innerRadius={36} outerRadius={62} paddingAngle={4} dataKey="value">
+                  {ch.authBreakdown.map((_,i)=><Cell key={i} fill={PAL[i]}/>)}
+                </Pie>
+                <Tooltip contentStyle={{background:C.s2,border:`1px solid ${C.border}`,borderRadius:8,fontSize:12}}/>
+              </PieChart>
+            </ResponsiveContainer>
+            <div style={{display:'flex',flexDirection:'column',gap:10}}>
+              {ch.authBreakdown.map((a,i)=>(
+                <div key={i} style={{display:'flex',alignItems:'center',gap:8}}>
+                  <div style={{width:10,height:10,borderRadius:3,background:PAL[i],flexShrink:0}}/>
+                  <span style={{fontSize:13,color:C.mid,textTransform:'capitalize'}}>{a._id||'local'}</span>
+                  <span style={{fontSize:14,fontWeight:700,color:C.text,marginLeft:'auto',paddingLeft:8}}>{a.count}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </Card>
+        <Card>
+          <ST>Vibe Categories</ST>
+          <div style={{display:'flex',flexDirection:'column',gap:10,marginTop:4}}>
+            {(ch.vibeCategories.length?ch.vibeCategories:[{_id:'No vibes yet',count:0}]).slice(0,6).map((c,i)=>(
+              <div key={i} style={{display:'flex',alignItems:'center',gap:10}}>
+                <div style={{fontSize:11,color:C.sub,width:66,textTransform:'uppercase',letterSpacing:'0.05em',flexShrink:0,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{c._id}</div>
+                <div style={{flex:1,height:5,background:C.s2,borderRadius:3,overflow:'hidden'}}>
+                  <div style={{height:'100%',borderRadius:3,background:PAL[i%PAL.length],width:`${Math.min(100,(c.count/(ch.vibeCategories[0]?.count||1))*100)}%`}}/>
+                </div>
+                <div style={{fontSize:13,color:C.text,fontWeight:600,width:24,textAlign:'right'}}>{c.count}</div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+// ══ USERS ════════════════════════════════════════════════════════════════════
+function Users() {
+  const [rows,setRows]     = useState([]);
+  const [total,setTotal]   = useState(0);
+  const [pg,setPg]         = useState(1);
+  const [q,setQ]           = useState('');
+  const [fl,setFl]         = useState('');
+  const [loading,setL]     = useState(false);
+  const [modal,setModal]   = useState(null);
+  const [amt,setAmt]       = useState('');
+  const [rsn,setRsn]       = useState('');
+  const [toast,showToast]  = useToast();
+
+  const load = useCallback(async()=>{
+    setL(true);
+    const p = new URLSearchParams({page:pg,limit:20,search:q,filter:fl});
+    const d = await req('GET',`/admin/users?${p}`).catch(()=>({users:[],total:0}));
+    setRows(d.users||[]); setTotal(d.total||0); setL(false);
+  },[pg,q,fl]);
+
+  useEffect(()=>{load();},[load]);
+
+  const ban   = async(id,banned) => { const r=banned?(prompt('Ban reason:')||''):''; if(r===null)return; await req('POST',`/admin/users/${id}/ban`,{banned,reason:r}).catch(e=>showToast(e.message)); showToast(banned?'User banned':'User unbanned'); load(); };
+  const admin = async(id,v)      => { await req('PATCH',`/admin/users/${id}`,{isAdmin:v}).catch(e=>showToast(e.message)); showToast(v?'Promoted to admin':'Admin removed'); load(); };
+  const del   = async id         => { if(!confirm('Delete this user permanently?'))return; await req('DELETE',`/admin/users/${id}`).catch(e=>showToast(e.message)); showToast('User deleted'); load(); };
+  const coins = async()          => { if(!amt)return; await req('POST',`/admin/users/${modal._id}/coins`,{amount:Number(amt),reason:rsn||'Admin grant'}).catch(e=>showToast(e.message)); showToast(`Coins updated`); setModal(null);setAmt('');setRsn(''); load(); };
+
+  const FLS = [['','All'],['online','Online'],['google','Google'],['local','Local'],['admin','Admins']];
+
+  return (
+    <div style={{padding:28}} className="fade">
+      <Toast msg={toast}/>
+      <PH title="Users" sub={`${total.toLocaleString()} total users`}/>
+
+      <div style={{display:'flex',gap:12,marginBottom:16,flexWrap:'wrap',alignItems:'center'}}>
+        <Inp style={{width:260}} placeholder="🔍  Search name, handle, email…" value={q} onChange={e=>{setQ(e.target.value);setPg(1)}}/>
+        <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+          {FLS.map(([f,l])=>(
+            <button key={f} onClick={()=>{setFl(f);setPg(1)}} style={{
+              background:fl===f?`${C.purple}20`:'transparent',border:`1px solid ${fl===f?C.purple:C.border}`,
+              borderRadius:9,padding:'7px 13px',color:fl===f?C.purple:C.sub,cursor:'pointer',fontSize:12,fontFamily:'inherit',fontWeight:fl===f?600:400
+            }}>{l}</button>
+          ))}
+        </div>
+      </div>
+
+      <Card style={{padding:0,overflow:'hidden'}}>
+        <table style={{width:'100%',borderCollapse:'collapse'}}>
+          <thead><tr>
+            <TH>User</TH><TH>Handle</TH><TH>Auth</TH><TH>Coins</TH><TH>Status</TH><TH>Joined</TH><TH>Actions</TH>
+          </tr></thead>
+          <tbody>
+            {loading ? <tr><td colSpan={7} style={{textAlign:'center',padding:50}}><Spin s={32}/></td></tr>
+            : rows.length===0 ? <tr><td colSpan={7} style={{textAlign:'center',padding:40,color:C.sub,fontSize:13}}>No users found</td></tr>
+            : rows.map(u => (
+              <tr key={u._id}>
+                <TD>
+                  <div style={{display:'flex',alignItems:'center',gap:10}}>
+                    <div style={{width:34,height:34,borderRadius:9,background:`linear-gradient(135deg,${C.purple},${C.pink})`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,fontWeight:700,overflow:'hidden',flexShrink:0}}>
+                      {u.avatar?<img src={u.avatar} alt="" style={{width:'100%',height:'100%',objectFit:'cover'}}/>:u.name?.[0]}
+                    </div>
+                    <div>
+                      <div style={{fontSize:13,fontWeight:600,color:C.text,whiteSpace:'nowrap'}}>{u.name}</div>
+                      <div style={{display:'flex',gap:4,marginTop:2}}>
+                        {u.isAdmin && <Badge text="ADMIN" c={C.gold}/>}
+                        {u.banned  && <Badge text="BANNED" c={C.red}/>}
+                      </div>
+                    </div>
+                  </div>
+                </TD>
+                <TD style={{fontFamily:"'Space Mono',monospace",color:C.purple,fontSize:12}}>@{u.handle}</TD>
+                <TD><Badge text={u.authProvider} c={u.authProvider==='google'?C.cyan:C.mint}/></TD>
+                <TD style={{fontFamily:"'Space Mono',monospace",color:C.gold,fontWeight:700}}>{u.coinBalance||0}</TD>
+                <TD><Badge text={u.online?'Online':'Offline'} c={u.online?C.green:C.sub}/></TD>
+                <TD style={{fontSize:11,color:C.sub,whiteSpace:'nowrap'}}>{dstr(u.createdAt)}</TD>
+                <TD>
+                  <div style={{display:'flex',gap:5}}>
+                    <button title="Manage coins" onClick={()=>setModal(u)} style={{background:`${C.gold}20`,border:'none',borderRadius:7,padding:'5px 8px',cursor:'pointer',fontSize:13}}>🪙</button>
+                    <button title={u.banned?'Unban':'Ban'} onClick={()=>ban(u._id,!u.banned)} style={{background:`${u.banned?C.green:C.red}20`,border:'none',borderRadius:7,padding:'5px 8px',cursor:'pointer',fontSize:13}}>{u.banned?'✓':'🚫'}</button>
+                    <button title={u.isAdmin?'Remove admin':'Make admin'} onClick={()=>admin(u._id,!u.isAdmin)} style={{background:`${C.purple}20`,border:'none',borderRadius:7,padding:'5px 8px',cursor:'pointer',fontSize:13}}>{u.isAdmin?'⬇':'⭐'}</button>
+                    <button title="Delete" onClick={()=>del(u._id)} style={{background:`${C.red}20`,border:'none',borderRadius:7,padding:'5px 8px',cursor:'pointer',fontSize:13}}>✕</button>
+                  </div>
+                </TD>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </Card>
+      <Pager page={pg} total={total} limit={20} go={setPg}/>
+
+      {modal && (
+        <Modal title={`Coins — ${modal.name}`} onClose={()=>setModal(null)}>
+          <div style={{display:'flex',flexDirection:'column',gap:14}}>
+            <div style={{background:C.s2,borderRadius:10,padding:'10px 14px',fontSize:12,color:C.sub}}>Current balance: <strong style={{color:C.gold}}>{modal.coinBalance||0}</strong></div>
+            <div><Lbl>Amount (+ grant / − deduct)</Lbl><Inp type="number" value={amt} onChange={e=>setAmt(e.target.value)} placeholder="e.g. 100"/></div>
+            <div><Lbl>Reason</Lbl><Inp value={rsn} onChange={e=>setRsn(e.target.value)} placeholder="Admin grant"/></div>
+            <Btn onClick={coins} style={{padding:12,background:`linear-gradient(135deg,${C.gold},${C.pink})`}}>Apply ✦</Btn>
+          </div>
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+// ══ MESSAGES ════════════════════════════════════════════════════════════════
+function Messages() {
+  const [rows,setRows]   = useState([]);
+  const [total,setTotal] = useState(0);
+  const [pg,setPg]       = useState(1);
+  const [q,setQ]         = useState('');
+  const [loading,setL]   = useState(false);
+  const [toast,showToast] = useToast();
+
+  const load = useCallback(async()=>{
+    setL(true);
+    const p = new URLSearchParams({page:pg,limit:30,search:q});
+    const d = await req('GET',`/admin/messages?${p}`).catch(()=>({messages:[],total:0}));
+    setRows(d.messages||[]); setTotal(d.total||0); setL(false);
+  },[pg,q]);
+
+  useEffect(()=>{load();},[load]);
+
+  const del = async id => { if(!confirm('Delete permanently?'))return; await req('DELETE',`/admin/messages/${id}`).catch(e=>showToast(e.message)); showToast('Deleted'); load(); };
+
+  const TC = {text:C.sub,image:C.cyan,video:C.pink,audio:C.mint,document:C.gold,link:C.purple,deleted:C.red};
+
+  return (
+    <div style={{padding:28}} className="fade">
+      <Toast msg={toast}/>
+      <PH title="Messages" sub={`${total.toLocaleString()} total messages`}/>
+      <Inp style={{width:320,marginBottom:16}} placeholder="🔍  Search content…" value={q} onChange={e=>{setQ(e.target.value);setPg(1)}}/>
+      <Card style={{padding:0,overflow:'hidden'}}>
+        <table style={{width:'100%',borderCollapse:'collapse'}}>
+          <thead><tr><TH>Sender</TH><TH>Content</TH><TH>Type</TH><TH>Sent</TH><TH>Delete</TH></tr></thead>
+          <tbody>
+            {loading ? <tr><td colSpan={5} style={{textAlign:'center',padding:50}}><Spin s={32}/></td></tr>
+            : rows.length===0 ? <tr><td colSpan={5} style={{textAlign:'center',padding:40,color:C.sub,fontSize:13}}>No messages found</td></tr>
+            : rows.map(m=>(
+              <tr key={m._id}>
+                <TD style={{fontFamily:"'Space Mono',monospace",color:C.purple,fontSize:12,whiteSpace:'nowrap'}}>@{m.sender?.handle||'?'}</TD>
+                <TD style={{maxWidth:340}}>
+                  <div style={{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',color:C.text}}>{m.text||<em style={{color:C.sub}}>[{m.type}]</em>}</div>
+                  {m.mediaUrl&&<div style={{fontSize:11,color:C.cyan,marginTop:2,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>🔗 {m.mediaUrl}</div>}
+                </TD>
+                <TD><Badge text={m.type} c={TC[m.type]||C.sub}/></TD>
+                <TD style={{fontSize:11,color:C.sub,whiteSpace:'nowrap'}}>{tstr(m.createdAt)}</TD>
+                <TD><button onClick={()=>del(m._id)} style={{background:`${C.red}20`,border:'none',borderRadius:7,padding:'5px 10px',cursor:'pointer',color:C.red,fontSize:12,fontWeight:600}}>Delete</button></TD>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </Card>
+      <Pager page={pg} total={total} limit={30} go={setPg}/>
+    </div>
+  );
+}
+
+// ══ VIBES ════════════════════════════════════════════════════════════════════
+function Vibes() {
+  const [rows,setRows]   = useState([]);
+  const [total,setTotal] = useState(0);
+  const [pg,setPg]       = useState(1);
+  const [q,setQ]         = useState('');
+  const [loading,setL]   = useState(false);
+  const [toast,showToast] = useToast();
+
+  const load = useCallback(async()=>{
+    setL(true);
+    const p = new URLSearchParams({page:pg,limit:18,search:q});
+    const d = await req('GET',`/admin/vibes?${p}`).catch(()=>({vibes:[],total:0}));
+    setRows(d.vibes||[]); setTotal(d.total||0); setL(false);
+  },[pg,q]);
+
+  useEffect(()=>{load();},[load]);
+
+  const del    = async id   => { if(!confirm('Delete permanently?'))return; await req('DELETE',`/admin/vibes/${id}`).catch(e=>showToast(e.message)); showToast('Deleted'); load(); };
+  const status = async(id,s)=> { await req('PATCH',`/admin/vibes/${id}/status`,{status:s}).catch(e=>showToast(e.message)); showToast(`Status → ${s}`); load(); };
+  const SC = {ready:C.green,processing:C.gold,failed:C.red};
+
+  return (
+    <div style={{padding:28}} className="fade">
+      <Toast msg={toast}/>
+      <PH title="Vibe Videos" sub={`${total.toLocaleString()} total vibes`}/>
+      <Inp style={{width:320,marginBottom:18}} placeholder="🔍  Search title…" value={q} onChange={e=>{setQ(e.target.value);setPg(1)}}/>
+
+      {loading ? <Loader/> : rows.length===0 ? (
+        <div style={{textAlign:'center',padding:60,color:C.sub}}>No vibes found</div>
+      ) : (
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(230px,1fr))',gap:14,marginBottom:20}}>
+          {rows.map(v=>{
+            const c1=v.paletteColors?.[0]||C.purple, c2=v.paletteColors?.[1]||C.pink;
+            return (
+              <Card key={v._id} style={{padding:0,overflow:'hidden'}}>
+                <div style={{height:100,background:v.thumbnailUrl?`url(${v.thumbnailUrl}) center/cover`:`linear-gradient(135deg,${c1},${c2})`,position:'relative'}}>
+                  <div style={{position:'absolute',top:8,right:8}}><Badge text={v.status} c={SC[v.status]||C.sub}/></div>
+                  <div style={{position:'absolute',bottom:8,left:8}}><Badge text={v.category||'?'} c={C.pink}/></div>
+                </div>
+                <div style={{padding:12}}>
+                  <div style={{fontSize:13,fontWeight:600,color:C.text,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',marginBottom:3}}>{v.title}</div>
+                  <div style={{fontSize:11,color:C.sub,marginBottom:10}}>@{v.creator?.handle||'?'} · {fmt(v.views||0)} views</div>
+                  <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+                    {v.status!=='ready' && <button onClick={()=>status(v._id,'ready')} style={{background:`${C.green}20`,border:'none',borderRadius:7,padding:'4px 10px',cursor:'pointer',color:C.green,fontSize:12,fontWeight:600}}>Approve</button>}
+                    {v.status==='ready' && <button onClick={()=>status(v._id,'failed')} style={{background:`${C.gold}20`,border:'none',borderRadius:7,padding:'4px 10px',cursor:'pointer',color:C.gold,fontSize:12,fontWeight:600}}>Hide</button>}
+                    <button onClick={()=>del(v._id)} style={{background:`${C.red}20`,border:'none',borderRadius:7,padding:'4px 10px',cursor:'pointer',color:C.red,fontSize:12,fontWeight:600}}>Delete</button>
+                  </div>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+      <Pager page={pg} total={total} limit={18} go={setPg}/>
+    </div>
+  );
+}
+
+// ══ COINS ════════════════════════════════════════════════════════════════════
+function Coins() {
+  const [d,setD]       = useState(null);
+  const [loading,setL] = useState(true);
+
+  useEffect(()=>{
+    req('GET','/admin/coins?page=1&limit=40').then(r=>{setD(r);setL(false)}).catch(()=>setL(false));
+  },[]);
+
+  if (loading) return <Loader/>;
+  if (!d) return <div style={{padding:28,color:C.red}}>Failed to load coin data</div>;
+
+  const earned = d.summary.find(s=>s._id==='earn')?.total||0;
+  const spent  = Math.abs(d.summary.find(s=>s._id==='spend')?.total||0);
+
+  return (
+    <div style={{padding:28}} className="fade">
+      <PH title="Coins" sub="Platform economy overview"/>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:14,marginBottom:22}}>
+        <StatCard label="Total Earned"     value={fmt(earned)}       sub="All time"    color={C.gold}  icon="⬆"/>
+        <StatCard label="Total Spent"      value={fmt(spent)}        sub="All time"    color={C.red}   icon="⬇"/>
+        <StatCard label="Net Circulating"  value={fmt(earned-spent)} sub="In wallets"  color={C.green} icon="💰"/>
+      </div>
+
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:18,marginBottom:22}}>
+        <Card>
+          <ST>Top Coin Earners</ST>
+          {d.topEarners.length===0 ? <div style={{color:C.sub,fontSize:13}}>No data yet</div>
+          : d.topEarners.map((u,i)=>(
+            <div key={u._id} style={{display:'flex',alignItems:'center',gap:12,padding:'10px 0',borderBottom:i<d.topEarners.length-1?`1px solid ${C.border}30`:'none'}}>
+              <div style={{fontSize:16,fontWeight:800,color:C.sub,fontFamily:"'Space Mono',monospace",width:24}}>#{i+1}</div>
+              <div style={{width:32,height:32,borderRadius:8,background:`linear-gradient(135deg,${C.purple},${C.pink})`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,fontWeight:700}}>{u.name?.[0]}</div>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:13,fontWeight:600,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{u.name}</div>
+                <div style={{fontSize:11,color:C.sub}}>@{u.handle}</div>
+              </div>
+              <div style={{fontFamily:"'Space Mono',monospace",color:C.gold,fontWeight:700}}>{fmt(u.totalCoinsEarned||0)}</div>
+            </div>
+          ))}
+        </Card>
+        <Card>
+          <ST>Transaction Breakdown</ST>
+          {d.summary.length===0 ? <div style={{color:C.sub,fontSize:13,marginTop:8}}>No transactions yet</div>
+          : <ResponsiveContainer width="100%" height={200}>
+              <PieChart>
+                <Pie data={d.summary.map(s=>({name:s._id,value:Math.abs(s.total)}))} cx="50%" cy="50%" outerRadius={70} paddingAngle={4} dataKey="value">
+                  {d.summary.map((_,i)=><Cell key={i} fill={PAL[i]}/>)}
+                </Pie>
+                <Tooltip contentStyle={{background:C.s2,border:`1px solid ${C.border}`,borderRadius:8,fontSize:12}}/>
+                <Legend wrapperStyle={{fontSize:12,color:C.mid}}/>
+              </PieChart>
+            </ResponsiveContainer>
+          }
+        </Card>
+      </div>
+
+      <Card style={{padding:0,overflow:'hidden'}}>
+        <div style={{padding:'14px 20px',borderBottom:`1px solid ${C.border}`}}><ST>Recent Transactions</ST></div>
+        <table style={{width:'100%',borderCollapse:'collapse'}}>
+          <thead><tr><TH>User</TH><TH>Amount</TH><TH>Reason</TH><TH>Type</TH><TH>Balance After</TH><TH>Time</TH></tr></thead>
+          <tbody>
+            {d.transactions.length===0 ? <tr><td colSpan={6} style={{textAlign:'center',padding:40,color:C.sub,fontSize:13}}>No transactions yet</td></tr>
+            : d.transactions.map(tx=>(
+              <tr key={tx._id}>
+                <TD style={{fontFamily:"'Space Mono',monospace",color:C.purple,fontSize:12}}>@{tx.user?.handle||'?'}</TD>
+                <TD style={{fontFamily:"'Space Mono',monospace",color:tx.amount>=0?C.green:C.red,fontWeight:700}}>{tx.amount>=0?'+':''}{tx.amount}</TD>
+                <TD style={{fontSize:12}}>{tx.reason}</TD>
+                <TD><Badge text={tx.type} c={tx.type==='earn'?C.green:tx.type==='spend'?C.red:C.gold}/></TD>
+                <TD style={{fontFamily:"'Space Mono',monospace",color:C.gold,fontWeight:700}}>{tx.balance}</TD>
+                <TD style={{fontSize:11,color:C.sub,whiteSpace:'nowrap'}}>{tstr(tx.createdAt)}</TD>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </Card>
+    </div>
+  );
+}
+
+// ══ BLOOM ════════════════════════════════════════════════════════════════════
+function Bloom() {
+  return (
+    <div style={{padding:28}} className="fade">
+      <PH title="Bloom" sub="Connection health scores across the network"/>
+      <Card style={{textAlign:'center',padding:50}}>
+        <div style={{fontSize:52,marginBottom:16}}>🌸</div>
+        <div style={{fontSize:18,fontWeight:700,marginBottom:10}}>Bloom Analytics</div>
+        <div style={{color:C.sub,maxWidth:480,margin:'0 auto',lineHeight:1.8,fontSize:14}}>
+          Bloom scores are calculated per conversation pair — based on message frequency, call duration, media shared, and streak days. Data populates as users interact.
+        </div>
+        <div style={{display:'flex',gap:14,justifyContent:'center',marginTop:30,flexWrap:'wrap'}}>
+          {[[C.sub,'Low','Healthy baseline'],[C.gold,'Mid','Some drift detected'],[C.red,'High','Needs attention']].map(([c,l,d])=>(
+            <div key={l} style={{background:C.s2,border:`1px solid ${C.border}`,borderRadius:12,padding:'16px 20px',textAlign:'left',minWidth:150}}>
+              <div style={{width:10,height:10,borderRadius:'50%',background:c,marginBottom:10,boxShadow:`0 0 8px ${c}`}}/>
+              <div style={{fontSize:13,fontWeight:700,marginBottom:4}}>{l} Urgency</div>
+              <div style={{fontSize:11,color:C.sub,lineHeight:1.6}}>{d}</div>
+            </div>
+          ))}
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+// ══ SETTINGS ═════════════════════════════════════════════════════════════════
+function Settings({admin}) {
+  const [url,setUrl]   = useState(API_URL);
+  const [saved,setSaved] = useState(false);
+
+  const save = () => { API_URL=url; localStorage.setItem('cloes_admin_api',url); setSaved(true); setTimeout(()=>setSaved(false),2000); };
+
+  return (
+    <div style={{padding:28}} className="fade">
+      <PH title="Settings" sub="Portal configuration"/>
+      <div style={{maxWidth:540,display:'flex',flexDirection:'column',gap:18}}>
+
+        <Card>
+          <ST>Admin Account</ST>
+          <div style={{display:'flex',alignItems:'center',gap:14}}>
+            <div style={{width:48,height:48,borderRadius:14,background:`linear-gradient(135deg,${C.purple},${C.pink})`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,fontWeight:700,flexShrink:0}}>{admin?.name?.[0]||'A'}</div>
+            <div>
+              <div style={{fontSize:16,fontWeight:700}}>{admin?.name}</div>
+              <div style={{fontSize:12,color:C.sub,marginTop:2}}>@{admin?.handle} · {admin?.email}</div>
+              <Badge text="SUPER ADMIN" c={C.gold}/>
+            </div>
+          </div>
+        </Card>
+
+        <Card>
+          <ST>API Connection</ST>
+          <div style={{display:'flex',flexDirection:'column',gap:12}}>
+            <div><Lbl>Backend URL</Lbl><Inp value={url} onChange={e=>setUrl(e.target.value)} placeholder="http://localhost:5000/api"/></div>
+            <div style={{fontSize:11,color:C.sub}}>Change this if your backend runs on a different port or domain</div>
+            <Btn onClick={save} style={{padding:'10px 20px',alignSelf:'flex-start',background:`linear-gradient(135deg,${C.purple},${C.pink})`}}>
+              {saved?'✓ Saved':'Save & Reconnect ✦'}
+            </Btn>
+          </div>
+        </Card>
+
+        <Card>
+          <ST>Stack Info</ST>
+          <div style={{display:'flex',flexDirection:'column',gap:9}}>
+            {[['Portal','Standalone HTML — open in any browser, no build needed'],['Backend','Node.js + Express + Socket.io'],['Database','MongoDB Atlas'],['Media','Cloudinary'],['Push','Firebase Admin SDK'],['Auth','JWT + Google OAuth 2.0']].map(([k,v])=>(
+              <div key={k} style={{display:'flex',gap:14}}>
+                <div style={{fontSize:12,color:C.sub,width:80,flexShrink:0}}>{k}</div>
+                <div style={{fontSize:11,color:C.mid,fontFamily:"'Space Mono',monospace"}}>{v}</div>
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        <div style={{background:`${C.purple}12`,border:`1px solid ${C.purple}30`,borderRadius:12,padding:'14px 18px',fontSize:12,color:C.mid,lineHeight:1.9}}>
+          <strong style={{color:C.purple}}>How to open this portal:</strong><br/>
+          Just open this <strong>cloes-admin-portal.html</strong> file in Chrome, Firefox, Safari, or Edge.<br/>
+          No server, no npm install, no build step. Works offline once loaded ✦
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ══ APP ROOT ══════════════════════════════════════════════════════════════════
+function App() {
+  const [admin,setAdmin]     = useState(null);
+  const [page,setPage]       = useState('dashboard');
+  const [checking,setCheck]  = useState(true);
+
+  useEffect(()=>{
+    if (TOKEN) {
+      req('GET','/auth/me')
+        .then(d=>{ if(d.user?.isAdmin){setAdmin(d.user);}else{TOKEN='';localStorage.removeItem('cloes_admin_token');} })
+        .catch(()=>{ TOKEN=''; })
+        .finally(()=>setCheck(false));
+    } else setCheck(false);
+  },[]);
+
+  const logout = () => { TOKEN=''; localStorage.removeItem('cloes_admin_token'); setAdmin(null); };
+
+  if (checking) return (
+    <div style={{minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',background:C.bg}}>
+      <div style={{textAlign:'center'}}><Spin s={36}/><div style={{color:C.sub,fontSize:13,marginTop:14}}>Connecting to backend…</div></div>
+    </div>
+  );
+
+  if (!admin) return <Login onLogin={u=>setAdmin(u)}/>;
+
+  const PAGES = {dashboard:Dashboard,users:Users,messages:Messages,vibes:Vibes,coins:Coins,bloom:Bloom,settings:Settings};
+  const Page  = PAGES[page]||Dashboard;
+
+  return (
+    <div style={{display:'flex',minHeight:'100vh',background:C.bg}}>
+      <div style={{position:'fixed',top:'5%',left:'20%',width:600,height:600,background:`${C.purple}08`,borderRadius:'50%',filter:'blur(150px)',pointerEvents:'none',zIndex:0}}/>
+      <div style={{position:'fixed',bottom:'10%',right:'10%',width:400,height:400,background:`${C.pink}06`,borderRadius:'50%',filter:'blur(120px)',pointerEvents:'none',zIndex:0}}/>
+      <Sidebar page={page} setPage={setPage} admin={admin} logout={logout}/>
+      <div style={{marginLeft:226,flex:1,minHeight:'100vh',position:'relative',zIndex:1}}>
+        <Topbar/>
+        <Page admin={admin}/>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

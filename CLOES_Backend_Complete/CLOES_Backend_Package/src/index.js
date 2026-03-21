@@ -33,6 +33,7 @@ const emergencyRoutes = require('./routes/emergency');
 const callRoutes      = require('./routes/calls');
 const museRoutes      = require('./routes/muse');
 const exportRoutes    = require('./routes/exports');
+const adminRoutes     = require('./routes/admin');
 
 require('./config/passport');
 
@@ -48,7 +49,11 @@ initSocket(server);
 // ── Middleware ────────────────────────────────────────────────────────────────
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 app.use(cors({
-  origin: [process.env.CLIENT_URL, 'http://localhost:3000', 'http://10.0.2.2:5000'],
+  origin: function (origin, cb) {
+    // Allow: no origin (mobile apps, local HTML files), localhost, and configured CLIENT_URL
+    if (!origin || origin === 'null' || /localhost/.test(origin) || origin === process.env.CLIENT_URL) return cb(null, true);
+    cb(null, true); // Allow all in dev; restrict in prod if needed
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Session-Id']
@@ -79,6 +84,7 @@ app.use('/api/emergency',   emergencyRoutes);
 app.use('/api/calls',       callRoutes);
 app.use('/api/muse',        museRoutes);
 app.use('/api/exports',     exportRoutes);
+app.use('/api/admin',       adminRoutes);
 
 // ── Health check ──────────────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => {

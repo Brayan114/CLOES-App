@@ -1,10 +1,10 @@
 {
     "logs": [
         {
-            "outputFile": "com.cloes.app-mergeDebugResources-69:/values-v23/values-v23.xml",
+            "outputFile": "com.cloes.app-mergeDebugResources-3:/values-v23/values-v23.xml",
             "map": [
                 {
-                    "source": "C:\\Users\\HP\\.gradle\\caches\\9.0-milestone-1\\transforms\\1bb61933beeea83dcace949a665309a5\\transformed\\material-1.11.0\\res\\values-v23\\values-v23.xml",
+                    "source": "C:\\Users\\braya\\.gradle\\caches\\9.0-milestone-1\\transforms\\439432e9a075fe93933703934341f51e\\transformed\\material-1.11.0\\res\\values-v23\\values-v23.xml",
                     "from": {
                         "startLines": "2,5,9,13,16,19,22,25,28,32",
                         "startColumns": "4,4,4,4,4,4,4,4,4,4",
@@ -23,7 +23,7 @@
                     }
                 },
                 {
-                    "source": "C:\\Users\\HP\\.gradle\\caches\\9.0-milestone-1\\transforms\\3ee6d010155bcf41fdea9d9b00f75991\\transformed\\cardview-1.0.0\\res\\values-v23\\values-v23.xml",
+                    "source": "C:\\Users\\braya\\.gradle\\caches\\9.0-milestone-1\\transforms\\199c937afec733ed48a23fda4a9f4512\\transformed\\cardview-1.0.0\\res\\values-v23\\values-v23.xml",
                     "from": {
                         "startLines": "2",
                         "startColumns": "4",
@@ -42,7 +42,7 @@
                     }
                 },
                 {
-                    "source": "C:\\Users\\HP\\.gradle\\caches\\9.0-milestone-1\\transforms\\9aa8cf847ffc31a370f2b315299af42f\\transformed\\appcompat-1.6.1\\res\\values-v23\\values-v23.xml",
+                    "source": "C:\\Users\\braya\\.gradle\\caches\\9.0-milestone-1\\transforms\\2a9cc01fd56eb09b9373ae26558c7d5b\\transformed\\appcompat-1.6.1\\res\\values-v23\\values-v23.xml",
                     "from": {
                         "startLines": "2,3,4,5,6,20,34,35,36,39,43,44,45,46",
                         "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4",
