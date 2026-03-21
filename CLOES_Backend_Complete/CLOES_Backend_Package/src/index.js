@@ -68,6 +68,9 @@ app.use(passport.initialize());
 // Serve uploaded files locally (dev only — use Cloudinary in prod)
 app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
+// Serve admin portal
+app.use(express.static(path.join(__dirname, '..', 'public')));
+
 // ── Routes ────────────────────────────────────────────────────────────────────
 app.use('/api/auth',        authRoutes);
 app.use('/api/users',       userRoutes);

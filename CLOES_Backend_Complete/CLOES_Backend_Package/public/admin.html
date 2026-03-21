@@ -42,7 +42,7 @@ const PAL = [C.purple,C.pink,C.cyan,C.mint,C.gold,C.green];
 
 // ── STATE ─────────────────────────────────────────────────────────────────────
 let TOKEN   = localStorage.getItem('cloes_admin_token') || '';
-let API_URL = localStorage.getItem('cloes_admin_api')   || 'http://localhost:5000/api';
+let API_URL = localStorage.getItem('cloes_admin_api')   || (window.location.origin + '/api');
 
 async function req(method, path, body) {
   const r = await fetch(API_URL + path, {
