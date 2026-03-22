@@ -47,7 +47,19 @@ connectDB();
 initSocket(server);
 
 // ── Middleware ────────────────────────────────────────────────────────────────
-app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdnjs.cloudflare.com", "https://unpkg.com"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      imgSrc: ["'self'", "data:", "https:", "blob:"],
+      connectSrc: ["'self'", "https:", "wss:"],
+    },
+  },
+}));
 app.use(cors({
   origin: function (origin, cb) {
     // Allow: no origin (mobile apps, local HTML files), localhost, and configured CLIENT_URL
