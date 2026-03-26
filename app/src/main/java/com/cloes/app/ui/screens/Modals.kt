@@ -384,11 +384,11 @@ fun AddContactSheet(vm: AppViewModel) {
                     }
                 }
             }
-            SectionLabel("Nickname")
-            CloesInput(vm.newContactName, { vm.newContactName = it }, "What you call them",
-                modifier = Modifier.padding(bottom = 12.dp))
-            SectionLabel("Handle (optional)")
+            SectionLabel("User Handle")
             CloesInput(vm.newContactHandle, { vm.newContactHandle = it }, "their.handle",
+                modifier = Modifier.padding(bottom = 12.dp))
+            SectionLabel("Nickname (optional)")
+            CloesInput(vm.newContactName, { vm.newContactName = it }, "What you call them",
                 modifier = Modifier.padding(bottom = 16.dp))
             SectionLabel("Assign to Circle")
             Row(modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(bottom = 16.dp),

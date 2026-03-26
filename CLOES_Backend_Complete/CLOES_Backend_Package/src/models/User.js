@@ -10,7 +10,7 @@ const EmergencyContactSchema = new mongoose.Schema({
 const UserSchema = new mongoose.Schema({
   // ── Identity ────────────────────────────────────────────────────────────────
   name:         { type: String, required: true, trim: true },
-  handle:       { type: String, unique: true, trim: true, lowercase: true },
+  handle:       { type: String, required: true, unique: true, trim: true, lowercase: true },
   email:        { type: String, unique: true, sparse: true, lowercase: true, trim: true },
   password:     { type: String, select: false },
   googleId:     { type: String, unique: true, sparse: true },
