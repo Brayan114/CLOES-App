@@ -1,0 +1,1390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ANIMAFORGE — AI Animation Pipeline</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@300;400;700;900&family=Share+Tech+Mono&family=Noto+Serif+JP:wght@300;400;700&display=swap" rel="stylesheet"/>
+<style>
+/* ═══════════════════════════════════════════════════
+   ROOT & RESET
+═══════════════════════════════════════════════════ */
+:root {
+  --ink:    #05050a;
+  --ink2:   #0d0d18;
+  --ink3:   #131320;
+  --border: rgba(255,255,255,0.06);
+  --bord2:  rgba(255,255,255,0.13);
+  --red:    #e8142a;
+  --red2:   #ff3347;
+  --cyan:   #00e5ff;
+  --gold:   #f5c842;
+  --text:   #dcd8f0;
+  --muted:  #52526a;
+  --mono:   'Share Tech Mono', monospace;
+  --sans:   'Zen Kaku Gothic New', sans-serif;
+  --serif:  'Noto Serif JP', serif;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--ink);
+  color: var(--text);
+  font-family: var(--sans);
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-thumb { background: var(--red); border-radius: 2px; }
+::placeholder { color: var(--muted); font-size: 13px; }
+input, textarea, select { outline: none; font-family: var(--sans); }
+button { cursor: pointer; font-family: var(--mono); }
+
+/* ═══════════════════════════════════════════════════
+   BACKGROUND LAYERS
+═══════════════════════════════════════════════════ */
+#bg-glow {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(ellipse 900px 600px at 10% 20%, rgba(232,20,42,0.07) 0%, transparent 65%),
+    radial-gradient(ellipse 700px 900px at 90% 80%, rgba(0,229,255,0.04) 0%, transparent 65%);
+}
+#bg-grid {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image:
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size: 60px 60px;
+  -webkit-mask-image: radial-gradient(ellipse 110% 110% at 50% 50%, black 20%, transparent 80%);
+  mask-image: radial-gradient(ellipse 110% 110% at 50% 50%, black 20%, transparent 80%);
+}
+#scanline {
+  position: fixed; left: 0; right: 0; height: 2px; z-index: 5; pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(0,229,255,0.35), transparent);
+  opacity: 0.4;
+  animation: scanDown 7s linear infinite;
+}
+@keyframes scanDown { from { top: -2px; } to { top: 100vh; } }
+
+/* ═══════════════════════════════════════════════════
+   APP SHELL
+═══════════════════════════════════════════════════ */
+#app { position: relative; z-index: 10; display: flex; flex-direction: column; min-height: 100vh; }
+
+/* ═══════════════════════════════════════════════════
+   HEADER
+═══════════════════════════════════════════════════ */
+#header {
+  height: 62px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(5,5,10,0.85);
+  backdrop-filter: blur(20px);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 32px;
+  position: sticky; top: 0; z-index: 100;
+  flex-shrink: 0;
+}
+.logo { display: flex; align-items: center; gap: 14px; }
+.logo-hex {
+  width: 32px; height: 32px; position: relative; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.logo-hex svg { position: absolute; animation: hexSpin 10s linear infinite; }
+@keyframes hexSpin { to { transform: rotate(360deg); } }
+.logo-wordmark { display: flex; flex-direction: column; gap: 1px; }
+.logo-title { font-family: var(--serif); font-size: 18px; letter-spacing: 4px; color: #fff; font-weight: 700; }
+.logo-sub { font-family: var(--mono); font-size: 9px; color: var(--muted); letter-spacing: 3px; }
+.header-right { display: flex; align-items: center; gap: 20px; }
+.phase-badge {
+  font-family: var(--mono); font-size: 9px; letter-spacing: 2px;
+  color: var(--cyan); border: 1px solid rgba(0,229,255,0.2);
+  padding: 4px 12px; border-radius: 2px;
+}
+.step-dots { display: flex; gap: 5px; align-items: center; }
+.step-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  border: 1.5px solid var(--muted); transition: all .3s;
+}
+.step-dot.done  { background: var(--red); border-color: var(--red); }
+.step-dot.active{ background: var(--cyan); border-color: var(--cyan); box-shadow: 0 0 8px var(--cyan); }
+
+/* ═══════════════════════════════════════════════════
+   BODY LAYOUT
+═══════════════════════════════════════════════════ */
+#body { display: flex; flex: 1; }
+
+/* ═══════════════════════════════════════════════════
+   SIDEBAR
+═══════════════════════════════════════════════════ */
+#sidebar {
+  width: 260px; flex-shrink: 0;
+  border-right: 1px solid var(--border);
+  background: var(--ink2);
+  display: flex; flex-direction: column;
+  position: sticky; top: 62px;
+  height: calc(100vh - 62px);
+  overflow-y: auto;
+}
+.sb-section { padding: 20px 18px; border-bottom: 1px solid var(--border); }
+.sb-label { font-family: var(--mono); font-size: 9px; letter-spacing: 3px; color: var(--muted); margin-bottom: 12px; }
+.nav-item {
+  display: flex; align-items: center; gap: 11px;
+  padding: 9px 11px; border-radius: 3px; cursor: pointer;
+  border: 1px solid transparent; margin-bottom: 3px;
+  font-size: 13px; color: var(--muted);
+  transition: all .15s;
+}
+.nav-item:hover { background: rgba(255,255,255,0.03); color: var(--text); }
+.nav-item.done  { color: var(--red); }
+.nav-item.active{ background: rgba(232,20,42,0.1); border-color: rgba(232,20,42,0.3); color: #fff; }
+.nav-num {
+  width: 22px; height: 22px; border-radius: 50%;
+  border: 1.5px solid currentColor;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono); font-size: 10px; flex-shrink: 0;
+}
+.nav-item.active .nav-num { background: var(--red); border-color: var(--red); color: #fff; }
+.nav-item.done  .nav-num  { background: rgba(232,20,42,0.15); }
+#cast-list { margin-top: 4px; }
+.char-chip {
+  display: flex; align-items: center; gap: 9px;
+  padding: 8px 10px; border-radius: 3px; cursor: pointer;
+  border: 1px solid var(--border); margin-bottom: 3px;
+  background: rgba(255,255,255,0.015); transition: all .15s;
+}
+.char-chip:hover  { background: rgba(255,255,255,0.035); border-color: var(--bord2); }
+.char-chip.active { background: rgba(0,229,255,0.06); border-color: rgba(0,229,255,0.25); }
+.char-avatar {
+  width: 28px; height: 28px; border-radius: 2px; flex-shrink: 0;
+  overflow: hidden; background: var(--ink3);
+  border: 1px solid var(--bord2);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono); font-size: 10px; color: var(--muted);
+}
+.char-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.chip-info { flex: 1; min-width: 0; }
+.chip-name { font-size: 12px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.chip-role { font-family: var(--mono); font-size: 9px; color: var(--muted); margin-top: 1px; letter-spacing: 1px; }
+#sb-stats { font-family: var(--mono); font-size: 10px; color: var(--muted); line-height: 2.2; }
+#sb-stats span { color: var(--text); }
+
+/* ═══════════════════════════════════════════════════
+   MAIN CONTENT
+═══════════════════════════════════════════════════ */
+#main {
+  flex: 1; overflow-y: auto;
+  display: flex; flex-direction: column;
+}
+.content-pad { padding: 40px; flex: 1; }
+
+/* ═══════════════════════════════════════════════════
+   PAGE HEADER
+═══════════════════════════════════════════════════ */
+.page-header { margin-bottom: 36px; }
+.step-label-top { font-family: var(--mono); font-size: 9px; letter-spacing: 4px; color: var(--red); margin-bottom: 8px; }
+.page-title { font-family: var(--serif); line-height: 1.1; }
+.page-title-jp { font-size: 28px; color: #fff; font-weight: 700; letter-spacing: 2px; }
+.page-title-en { font-family: var(--mono); font-size: 12px; letter-spacing: 3px; color: var(--muted); display: block; margin-top: 6px; }
+.page-subtitle {
+  margin-top: 12px; display: flex; align-items: center; gap: 10px;
+  font-size: 13px; color: var(--muted);
+}
+.page-subtitle::before { content: '//'; font-family: var(--mono); color: var(--red); font-size: 12px; }
+
+/* ═══════════════════════════════════════════════════
+   CARD
+═══════════════════════════════════════════════════ */
+.card {
+  background: var(--ink2); border: 1px solid var(--border); border-radius: 3px;
+  margin-bottom: 14px; transition: border-color .2s;
+}
+.card:hover { border-color: var(--bord2); }
+.card-head {
+  padding: 14px 20px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.card-title { font-family: var(--mono); font-size: 10px; letter-spacing: 2px; color: var(--cyan); }
+.card-body { padding: 20px; }
+.req { color: var(--red); }
+
+/* ═══════════════════════════════════════════════════
+   FORM ELEMENTS
+═══════════════════════════════════════════════════ */
+.field { margin-bottom: 18px; }
+.field:last-child { margin-bottom: 0; }
+.fl {
+  display: block; font-family: var(--mono); font-size: 9px;
+  letter-spacing: 3px; color: var(--muted); margin-bottom: 7px; text-transform: uppercase;
+}
+.inp {
+  width: 100%; background: var(--ink3); border: 1px solid var(--border);
+  border-radius: 2px; padding: 11px 14px; color: var(--text);
+  font-family: var(--sans); font-size: 14px; resize: vertical;
+  transition: border-color .15s, box-shadow .15s;
+}
+.inp:focus { border-color: rgba(0,229,255,0.4); box-shadow: 0 0 0 3px rgba(0,229,255,0.06); }
+select.inp {
+  appearance: none; cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath fill='%2352526a' d='M5 6L0 0h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 14px center;
+}
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+.grid4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; }
+
+/* click-grid options */
+.opt-btn {
+  padding: 10px 8px; text-align: center; cursor: pointer; border-radius: 2px;
+  border: 1px solid var(--border); background: var(--ink3);
+  font-family: var(--mono); font-size: 9px; letter-spacing: 1px; color: var(--muted);
+  transition: all .15s; line-height: 1.4;
+}
+.opt-btn:hover { border-color: var(--bord2); color: var(--text); }
+.opt-btn.active { border-color: rgba(232,20,42,0.5); background: rgba(232,20,42,0.08); color: var(--red2); }
+.opt-btn.active-cyan { border-color: rgba(0,229,255,0.4); background: rgba(0,229,255,0.06); color: var(--cyan); }
+
+/* ═══════════════════════════════════════════════════
+   IMAGE UPLOAD
+═══════════════════════════════════════════════════ */
+.img-upload {
+  width: 120px; aspect-ratio: 3/4; flex-shrink: 0;
+  border: 1.5px dashed rgba(0,229,255,0.2); border-radius: 3px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  cursor: pointer; overflow: hidden; background: var(--ink3);
+  transition: all .2s;
+}
+.img-upload:hover { border-color: var(--cyan); background: rgba(0,229,255,0.03); }
+.img-upload img { width: 100%; height: 100%; object-fit: cover; display: none; }
+.img-upload-hint { font-family: var(--mono); font-size: 8px; color: var(--muted); letter-spacing: 2px; text-align: center; margin-top: 6px; }
+.upload-icon { font-size: 20px; color: rgba(0,229,255,0.3); }
+.role-badge {
+  font-family: var(--mono); font-size: 9px; letter-spacing: 1px;
+  padding: 3px 9px; border-radius: 2px; border: 1px solid; display: inline-block;
+  margin-top: 8px; text-align: center;
+}
+.rb-protagonist { color: var(--gold); border-color: rgba(245,200,66,0.3); background: rgba(245,200,66,0.07); }
+.rb-antagonist  { color: var(--red2); border-color: rgba(255,51,71,0.3);  background: rgba(255,51,71,0.07);  }
+.rb-supporting  { color: var(--cyan); border-color: rgba(0,229,255,0.25);  background: rgba(0,229,255,0.05);  }
+.rb-background  { color: var(--muted);border-color: rgba(82,82,106,0.4);   background: rgba(82,82,106,0.07);  }
+
+/* ═══════════════════════════════════════════════════
+   CHAR TABS
+═══════════════════════════════════════════════════ */
+#char-tabs { display: flex; gap: 3px; flex-wrap: wrap; }
+.char-tab {
+  padding: 8px 16px; cursor: pointer;
+  font-family: var(--mono); font-size: 10px; letter-spacing: 1px;
+  border-radius: 3px 3px 0 0;
+  border: 1px solid var(--border); border-bottom-color: transparent;
+  background: var(--ink3); color: var(--muted);
+  transition: all .15s;
+}
+.char-tab.active { background: var(--ink2); border-color: var(--bord2); border-bottom-color: var(--ink2); color: #fff; margin-bottom: -1px; }
+#char-panel { border-radius: 0 3px 3px 3px; }
+
+/* ═══════════════════════════════════════════════════
+   BUTTONS
+═══════════════════════════════════════════════════ */
+.btn { display: inline-flex; align-items: center; gap: 8px; border: none; border-radius: 2px; font-size: 11px; letter-spacing: 2px; transition: all .15s; }
+.btn-primary {
+  background: var(--red); color: #fff; padding: 13px 28px;
+  box-shadow: 0 0 28px rgba(232,20,42,0.25);
+}
+.btn-primary:hover:not(:disabled) { background: var(--red2); box-shadow: 0 0 40px rgba(232,20,42,0.45); transform: translateY(-1px); }
+.btn-primary:disabled { opacity: .3; cursor: not-allowed; }
+.btn-ghost {
+  background: transparent; color: var(--muted); padding: 13px 20px;
+  border: 1px solid var(--border);
+}
+.btn-ghost:hover { border-color: var(--bord2); color: var(--text); }
+.btn-sm {
+  background: transparent; color: var(--cyan); padding: 6px 12px;
+  border: 1px solid rgba(0,229,255,0.2); font-size: 9px;
+}
+.btn-sm:hover { background: rgba(0,229,255,0.06); border-color: rgba(0,229,255,0.4); }
+.btn-danger { background: transparent; color: var(--red); padding: 6px 12px; border: 1px solid rgba(232,20,42,0.2); font-size: 9px; }
+.btn-danger:hover { background: rgba(232,20,42,0.08); }
+.btn-add {
+  width: 100%; justify-content: center; padding: 11px;
+  background: rgba(0,229,255,0.04); color: var(--cyan);
+  border: 1px dashed rgba(0,229,255,0.2); font-size: 10px;
+  margin-top: 6px;
+}
+.btn-add:hover { background: rgba(0,229,255,0.09); border-color: rgba(0,229,255,0.4); }
+
+/* ═══════════════════════════════════════════════════
+   NAV FOOTER
+═══════════════════════════════════════════════════ */
+#nav-footer {
+  padding: 22px 40px; border-top: 1px solid var(--border);
+  background: rgba(5,5,10,0.75); backdrop-filter: blur(12px);
+  display: flex; justify-content: space-between; align-items: center;
+  flex-shrink: 0;
+}
+.footer-step-label { font-family: var(--mono); font-size: 9px; letter-spacing: 2px; color: var(--muted); }
+.footer-step-name  { font-size: 14px; color: var(--text); margin-top: 2px; }
+.footer-btns { display: flex; gap: 10px; }
+
+/* ═══════════════════════════════════════════════════
+   GENERATING SCREEN
+═══════════════════════════════════════════════════ */
+#gen-screen {
+  display: none; flex-direction: column;
+  align-items: center; justify-content: center;
+  min-height: calc(100vh - 62px); padding: 40px;
+  flex: 1;
+}
+.reactor { position: relative; width: 160px; height: 160px; margin-bottom: 48px; }
+.ring {
+  position: absolute; border-radius: 50%;
+  border: 1.5px solid transparent;
+}
+.ring1 {
+  inset: 0;
+  border-top-color: var(--red); border-right-color: rgba(232,20,42,0.25);
+  animation: spin 1.8s linear infinite;
+}
+.ring2 {
+  inset: 22px;
+  border-top-color: var(--cyan); border-left-color: rgba(0,229,255,0.25);
+  animation: spin 2.4s linear infinite reverse;
+}
+.ring3 {
+  inset: 46px;
+  border-bottom-color: var(--gold); border-right-color: rgba(245,200,66,0.25);
+  animation: spin 3.2s linear infinite;
+}
+.ring-core {
+  position: absolute; inset: 64px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(232,20,42,0.25), rgba(0,229,255,0.08), transparent);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono); font-size: 9px; color: var(--muted); letter-spacing: 2px;
+  animation: pulse 2.2s ease-in-out infinite;
+}
+@keyframes spin  { to { transform: rotate(360deg);  } }
+@keyframes pulse { 0%,100% { opacity:.5; } 50% { opacity:1; } }
+.gen-title  { font-family: var(--serif); font-size: 28px; color: #fff; letter-spacing: 3px; margin-bottom: 8px; text-align: center; }
+.gen-status { font-family: var(--mono); font-size: 10px; letter-spacing: 3px; color: var(--muted); margin-bottom: 36px; text-align: center; }
+.prog-wrap  { width: min(460px, 100%); margin-bottom: 10px; }
+.prog-track { height: 2px; background: var(--ink3); border-radius: 1px; overflow: visible; position: relative; }
+.prog-fill  {
+  height: 100%; background: linear-gradient(90deg, var(--red), var(--cyan));
+  border-radius: 1px; transition: width .4s ease; position: relative;
+  width: 0%;
+}
+.prog-fill::after {
+  content: ''; position: absolute; right: -3px; top: 50%; transform: translateY(-50%);
+  width: 7px; height: 7px; border-radius: 50%; background: #fff;
+  box-shadow: 0 0 10px var(--cyan);
+}
+.prog-pct { font-family: var(--mono); font-size: 10px; color: var(--red); letter-spacing: 2px; text-align: center; margin-top: 10px; }
+
+/* ═══════════════════════════════════════════════════
+   OUTPUT SCREEN
+═══════════════════════════════════════════════════ */
+#output-screen { display: none; }
+
+.hero-card {
+  background: var(--ink2); border: 1px solid var(--border); border-radius: 3px;
+  padding: 32px; margin-bottom: 28px; position: relative; overflow: hidden;
+}
+.hero-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, var(--red), var(--cyan), var(--gold));
+}
+.hero-jp    { font-family: var(--serif); font-size: 10px; color: var(--muted); letter-spacing: 4px; margin-bottom: 6px; }
+.hero-title { font-family: var(--serif); font-size: 36px; color: #fff; font-weight: 700; line-height: 1.15; margin-bottom: 12px; }
+.hero-syn   { font-size: 14px; color: rgba(220,216,240,0.7); line-height: 1.75; max-width: 660px; }
+.hero-meta  { display: flex; gap: 32px; margin-top: 24px; flex-wrap: wrap; }
+.meta-item  { display: flex; flex-direction: column; gap: 4px; }
+.meta-lbl   { font-family: var(--mono); font-size: 8px; letter-spacing: 3px; color: var(--muted); }
+.meta-val   { font-family: var(--mono); font-size: 20px; font-weight: 700; }
+/* corner brackets */
+.hero-card .corner { position: absolute; width: 12px; height: 12px; }
+.hero-card .c-tl { top:0;left:0;   border-top:1.5px solid var(--red);border-left:1.5px solid var(--red); }
+.hero-card .c-tr { top:0;right:0;  border-top:1.5px solid var(--red);border-right:1.5px solid var(--red); }
+.hero-card .c-bl { bottom:0;left:0;border-bottom:1.5px solid var(--red);border-left:1.5px solid var(--red); }
+.hero-card .c-br { bottom:0;right:0;border-bottom:1.5px solid var(--red);border-right:1.5px solid var(--red); }
+
+.section-head { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.section-head::before { content: ''; width: 3px; height: 18px; background: var(--red); flex-shrink: 0; }
+.section-title { font-family: var(--mono); font-size: 10px; letter-spacing: 3px; color: var(--text); }
+
+/* beats */
+.beat-row { background: var(--ink2); border: 1px solid var(--border); border-radius: 3px; margin-bottom: 8px; overflow: hidden; transition: border-color .15s; }
+.beat-row:hover { border-color: var(--bord2); }
+.beat-hd {
+  display: flex; align-items: center; gap: 12px; padding: 13px 16px; cursor: pointer;
+}
+.beat-num {
+  font-family: var(--mono); font-size: 10px; color: var(--red);
+  background: rgba(232,20,42,0.1); border: 1px solid rgba(232,20,42,0.2);
+  width: 28px; height: 28px; border-radius: 2px;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.beat-time { font-family: var(--mono); font-size: 10px; color: var(--muted); min-width: 80px; }
+.beat-chr  { font-family: var(--mono); font-size: 10px; color: var(--cyan); flex: 1; }
+.beat-cam  { font-family: var(--mono); font-size: 9px; color: var(--muted); }
+.beat-tog  { font-family: var(--mono); font-size: 9px; color: var(--muted); }
+.beat-bd   { padding: 0 16px 16px; border-top: 1px solid var(--border); display: none; }
+.beat-bd.open { display: block; }
+.beat-action { font-size: 14px; color: var(--text); line-height: 1.65; padding-top: 14px; margin-bottom: 12px; }
+.beat-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 12px; }
+.btag {
+  font-family: var(--mono); font-size: 9px; letter-spacing: 1px;
+  padding: 3px 9px; border-radius: 2px; border: 1px solid;
+}
+.btag-pose    { color: #a088ff; border-color: rgba(160,136,255,0.25); background: rgba(160,136,255,0.07); }
+.btag-emotion { color: var(--gold); border-color: rgba(245,200,66,0.25); background: rgba(245,200,66,0.07); }
+.sd-toggle {
+  display: flex; align-items: center; gap: 6px; cursor: pointer;
+  font-family: var(--mono); font-size: 9px; color: rgba(0,229,255,0.7);
+  background: none; border: none; letter-spacing: 2px; padding: 0; margin-bottom: 8px;
+}
+.sd-toggle:hover { color: var(--cyan); }
+.sd-box {
+  background: rgba(0,0,0,0.45); border: 1px solid rgba(0,229,255,0.1); border-radius: 2px;
+  padding: 12px; font-family: var(--mono); font-size: 11px; color: #66cc88;
+  line-height: 1.65; word-break: break-word; display: none;
+}
+.sd-box.open { display: block; }
+.anim-note { font-size: 12px; color: var(--muted); font-style: italic; margin-top: 10px; padding-left: 12px; border-left: 2px solid rgba(255,255,255,0.07); line-height: 1.6; }
+
+/* lora */
+.lora-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(255px, 1fr)); gap: 12px; margin-bottom: 28px; }
+.lora-card { background: var(--ink2); border: 1px solid var(--border); border-radius: 3px; overflow: hidden; }
+.lora-ch   { padding: 14px 16px; border-bottom: 1px solid var(--border); }
+.lora-name { font-family: var(--serif); font-size: 16px; color: #fff; }
+.lora-tag  { font-family: var(--mono); font-size: 8px; color: var(--muted); letter-spacing: 2px; margin-top: 2px; }
+.lora-body { padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; }
+.lora-fl   { font-family: var(--mono); font-size: 8px; letter-spacing: 3px; color: var(--muted); margin-bottom: 4px; }
+.lora-val  { font-size: 12px; color: rgba(220,216,240,0.8); line-height: 1.55; }
+.trait-list{ display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.trait-chip{ font-family: var(--mono); font-size: 9px; padding: 2px 8px; border-radius: 2px; color: var(--red2); border: 1px solid rgba(255,51,71,0.2); background: rgba(255,51,71,0.05); }
+
+/* pipeline */
+.pipe-row {
+  display: flex; align-items: stretch; margin-bottom: 5px;
+  background: var(--ink2); border: 1px solid var(--border); border-radius: 3px; overflow: hidden;
+}
+.pipe-key {
+  font-family: var(--mono); font-size: 9px; letter-spacing: 2px; color: var(--cyan);
+  width: 160px; flex-shrink: 0; padding: 12px 14px;
+  background: rgba(0,229,255,0.03); border-right: 1px solid var(--border);
+  display: flex; align-items: center;
+}
+.pipe-val { font-size: 13px; color: var(--text); padding: 12px 16px; flex: 1; display: flex; align-items: center; }
+
+/* tips / warnings */
+.tw-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 28px; }
+.tip-item {
+  padding: 12px 14px; margin-bottom: 6px; border-radius: 2px;
+  background: rgba(160,136,255,0.04); border-left: 2px solid rgba(160,136,255,0.3);
+  font-size: 13px; color: rgba(220,216,240,0.8); line-height: 1.55;
+}
+.warn-item {
+  padding: 12px 14px; margin-bottom: 6px; border-radius: 2px;
+  background: rgba(245,200,66,0.04); border-left: 2px solid rgba(245,200,66,0.35);
+  font-size: 13px; color: rgba(245,200,66,0.9); line-height: 1.55;
+  display: flex; gap: 8px;
+}
+
+/* diff colors */
+.diff-Expert { color: #ff2244; }
+.diff-Hard   { color: #ff7733; }
+.diff-Medium { color: #ffcc33; }
+.diff-Easy   { color: #33ff88; }
+
+/* ═══════════════════════════════════════════════════
+   ANIMATIONS
+═══════════════════════════════════════════════════ */
+.slide-up { animation: slideUp .3s ease both; }
+.fade-in  { animation: fadeIn .25s ease both; }
+@keyframes slideUp { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
+@keyframes fadeIn  { from { opacity:0; } to { opacity:1; } }
+
+/* ═══════════════════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════════════════ */
+@media (max-width: 780px) {
+  #sidebar { display: none; }
+  .content-pad { padding: 20px; }
+  .grid2,.grid3,.grid4 { grid-template-columns: 1fr; }
+  .tw-grid { grid-template-columns: 1fr; }
+  #nav-footer { padding: 16px 20px; }
+  .hero-title { font-size: 26px; }
+}
+</style>
+</head>
+<body>
+
+<!-- BG -->
+<div id="bg-glow"></div>
+<div id="bg-grid"></div>
+<div id="scanline"></div>
+
+<!-- APP -->
+<div id="app">
+
+  <!-- HEADER -->
+  <header id="header">
+    <div class="logo">
+      <div class="logo-hex">
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+          <path d="M16 2L29 9.5V22.5L16 30L3 22.5V9.5L16 2Z" stroke="#e8142a" stroke-width="1.2" fill="none"/>
+          <path d="M16 9L22 12.5V19.5L16 23L10 19.5V12.5L16 9Z" fill="#e8142a" opacity=".3"/>
+        </svg>
+      </div>
+      <div class="logo-wordmark">
+        <div class="logo-title">ANIMAFORGE</div>
+        <div class="logo-sub">AI ANIMATION PIPELINE</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="phase-badge">PHASE 1 — BLUEPRINT ENGINE</div>
+      <div class="step-dots">
+        <div class="step-dot" id="dot-0"></div>
+        <div class="step-dot" id="dot-1"></div>
+        <div class="step-dot" id="dot-2"></div>
+        <div class="step-dot" id="dot-3"></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- BODY -->
+  <div id="body">
+
+    <!-- SIDEBAR -->
+    <aside id="sidebar">
+      <div class="sb-section">
+        <div class="sb-label">WORKFLOW</div>
+        <div class="nav-item active" id="nav-0" onclick="goToStep(0)">
+          <div class="nav-num">1</div><span>Characters</span>
+        </div>
+        <div class="nav-item" id="nav-1" onclick="goToStep(1)">
+          <div class="nav-num">2</div><span>Reference Video</span>
+        </div>
+        <div class="nav-item" id="nav-2" onclick="goToStep(2)">
+          <div class="nav-num">3</div><span>Scene Direction</span>
+        </div>
+        <div class="nav-item" id="nav-3" onclick="">
+          <div class="nav-num">4</div><span>Blueprint</span>
+        </div>
+      </div>
+
+      <div class="sb-section" style="flex:1">
+        <div class="sb-label">CAST (<span id="cast-count">1</span>)</div>
+        <div id="cast-list"></div>
+        <button class="btn btn-add" onclick="addChar()" id="btn-add-char">+ ADD CHARACTER</button>
+      </div>
+
+      <div class="sb-section">
+        <div class="sb-label">PROJECT</div>
+        <div id="sb-stats">
+          CHARS: <span id="st-chars">1</span><br>
+          MOTION: <span id="st-motion">Action</span><br>
+          DURATION: <span id="st-dur">30</span>s<br>
+          CAMERA: <span id="st-cam">Dynamic</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <div id="main">
+
+      <!-- STEP SCREENS -->
+      <div id="steps-wrap" style="display:flex;flex-direction:column;flex:1;">
+
+        <!-- ═══ STEP 0: CHARACTERS ═══ -->
+        <div id="step-0" class="content-pad slide-up">
+          <div class="page-header">
+            <div class="step-label-top">STEP 01 / 03</div>
+            <div class="page-title">
+              <div class="page-title-jp">キャラクター設定</div>
+              <span class="page-title-en">CHARACTER SETUP</span>
+            </div>
+            <div class="page-subtitle">Define the cast who will perform in your animated scene</div>
+          </div>
+
+          <div id="char-tabs"></div>
+          <div class="card" id="char-panel" style="border-radius:0 3px 3px 3px;">
+            <div class="card-body" id="char-fields"></div>
+          </div>
+        </div>
+
+        <!-- ═══ STEP 1: VIDEO ═══ -->
+        <div id="step-1" class="content-pad slide-up" style="display:none;">
+          <div class="page-header">
+            <div class="step-label-top">STEP 02 / 03</div>
+            <div class="page-title">
+              <div class="page-title-jp">参照映像</div>
+              <span class="page-title-en">REFERENCE VIDEO</span>
+            </div>
+            <div class="page-subtitle">Describe the motion you want your characters to perform</div>
+          </div>
+
+          <div class="card">
+            <div class="card-head"><span class="card-title">MOTION TYPE</span></div>
+            <div class="card-body">
+              <div class="grid4" id="motion-grid"></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head"><span class="card-title">CLIP DURATION</span></div>
+            <div class="card-body">
+              <div style="display:flex;align-items:center;gap:12px;">
+                <input class="inp" type="number" id="v-duration" min="3" max="300" value="30" style="width:100px;" oninput="updateStats()"/>
+                <span style="font-family:var(--mono);font-size:10px;color:var(--muted);">SECONDS</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head"><span class="card-title">VIDEO DESCRIPTION <span class="req">*</span></span></div>
+            <div class="card-body">
+              <textarea class="inp" id="v-desc" rows="6"
+                placeholder="Describe what happens in the reference video — body movements, energy level, speed, specific poses, how figures move through space, footwork, hand positions, impact moments, directional flow..."></textarea>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head">
+              <span class="card-title">KEY ACTION BEATS</span>
+              <span style="font-family:var(--mono);font-size:9px;color:var(--muted);">OPTIONAL</span>
+            </div>
+            <div class="card-body">
+              <textarea class="inp" id="v-beats" rows="4"
+                placeholder="0:02 — sharp spin kick, right leg&#10;0:08 — slide low under incoming attack&#10;0:15 — dramatic pause, arms raised&#10;0:22 — full-extension forward leap"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ STEP 2: SCENE ═══ -->
+        <div id="step-2" class="content-pad slide-up" style="display:none;">
+          <div class="page-header">
+            <div class="step-label-top">STEP 03 / 03</div>
+            <div class="page-title">
+              <div class="page-title-jp">シーン演出</div>
+              <span class="page-title-en">SCENE DIRECTION</span>
+            </div>
+            <div class="page-subtitle">Assign characters to actions — direct the AI like a storyboard artist</div>
+          </div>
+
+          <div class="grid2">
+            <div class="card" style="margin-bottom:0">
+              <div class="card-head"><span class="card-title">SETTING <span class="req">*</span></span></div>
+              <div class="card-body">
+                <textarea class="inp" id="s-setting" rows="3"
+                  placeholder="e.g. Rooftop at dusk, neon-lit megacity stretching to the horizon, rain-slicked concrete..."></textarea>
+              </div>
+            </div>
+            <div class="card" style="margin-bottom:0">
+              <div class="card-head"><span class="card-title">MOOD / TONE</span></div>
+              <div class="card-body">
+                <textarea class="inp" id="s-mood" rows="3"
+                  placeholder="e.g. Tense standoff, years of rivalry about to explode, electrifying..."></textarea>
+              </div>
+            </div>
+          </div>
+          <div style="margin-bottom:14px;"></div>
+
+          <div class="card">
+            <div class="card-head"><span class="card-title">CHARACTER ASSIGNMENTS <span class="req">*</span></span></div>
+            <div class="card-body">
+              <div id="cast-ref-banner" style="margin-bottom:12px;padding:10px 14px;background:rgba(0,229,255,0.04);border:1px solid rgba(0,229,255,0.1);border-radius:2px;font-family:var(--mono);font-size:10px;color:var(--cyan);"></div>
+              <textarea class="inp" id="s-assign" rows="6"
+                placeholder='Tell the AI which character does what from the reference video.
+
+e.g. "Kaito performs the spin kick at 0:02. Ryuu holds the defensive stance on the opposite side. At 0:15 both face each other — Kaito in attack position, Ryuu braced for impact."'></textarea>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head"><span class="card-title">CAMERA STYLE</span></div>
+            <div class="card-body">
+              <div class="grid4" id="camera-grid"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ STEP 3: OUTPUT ═══ -->
+        <div id="step-3" class="content-pad fade-in" style="display:none;">
+          <div id="output-screen"></div>
+          <div id="error-screen" style="display:none;">
+            <div class="card" style="padding:40px;text-align:center;">
+              <p style="color:var(--red);font-family:var(--mono);font-size:12px;margin-bottom:20px;letter-spacing:2px;">GENERATION ERROR — CHECK API CONNECTION</p>
+              <pre id="error-msg" style="color:var(--muted);font-size:11px;text-align:left;max-height:200px;overflow:auto;margin-bottom:24px;"></pre>
+              <button class="btn btn-ghost" onclick="resetAll()">← TRY AGAIN</button>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- end steps-wrap -->
+
+      <!-- GENERATING -->
+      <div id="gen-screen">
+        <div class="reactor">
+          <div class="ring ring1"></div>
+          <div class="ring ring2"></div>
+          <div class="ring ring3"></div>
+          <div class="ring-core">AI</div>
+        </div>
+        <h2 class="gen-title">設計書生成中</h2>
+        <div class="gen-status">BUILDING YOUR ANIMATION BLUEPRINT</div>
+        <div class="prog-wrap">
+          <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
+        </div>
+        <div class="prog-pct" id="prog-pct">0%</div>
+      </div>
+
+      <!-- NAV FOOTER -->
+      <footer id="nav-footer">
+        <div>
+          <div class="footer-step-label">CURRENT STEP</div>
+          <div class="footer-step-name" id="footer-step-name">Character Setup</div>
+        </div>
+        <div class="footer-btns">
+          <button class="btn btn-ghost" id="btn-back" onclick="prevStep()" style="opacity:0;pointer-events:none;">← BACK</button>
+          <button class="btn btn-primary" id="btn-next" onclick="nextStep()">CONTINUE →</button>
+        </div>
+      </footer>
+
+    </div><!-- end main -->
+  </div><!-- end body -->
+</div><!-- end app -->
+
+<script>
+/* ═══════════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════════ */
+let currentStep = 0;
+let activeChar  = 0;
+let selectedMotion = "Action / Fight";
+let selectedCamera = "Dynamic (follows action)";
+let chars = [{ id: 1, name: "", desc: "", role: "protagonist", style: "Shonen", image: null }];
+let nextId = 2;
+
+const MOTION_TYPES  = ["Action / Fight","Running / Chase","Dialogue / Emotional","Dance / Rhythm","Environmental Pan","Transformation","Combat Magic","Custom"];
+const CAMERA_STYLES = ["Dynamic (follows action)","Cinematic wide","POV / First person","Static locked","Orbital","Dutch angle","Whip pan","Low angle hero"];
+const ANIME_STYLES  = ["Shonen","Shojo","Seinen","Mecha","Chibi","Dark Fantasy","Isekai","Cyberpunk"];
+const STEP_NAMES    = ["Character Setup","Reference Video","Scene Direction","Blueprint"];
+
+/* ═══════════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════════ */
+window.onload = () => {
+  buildMotionGrid();
+  buildCameraGrid();
+  renderCharTabs();
+  renderCharFields();
+  renderCastList();
+  updateStats();
+  updateNav();
+};
+
+/* ═══════════════════════════════════════════════════
+   STEP NAVIGATION
+═══════════════════════════════════════════════════ */
+function showStep(n) {
+  for (let i = 0; i < 4; i++) {
+    const el = document.getElementById("step-" + i);
+    if (el) el.style.display = i === n ? "" : "none";
+  }
+  document.getElementById("gen-screen").style.display = "none";
+  document.getElementById("nav-footer").style.display = "";
+  document.getElementById("steps-wrap").style.display = "flex";
+}
+
+function showGenerating() {
+  document.getElementById("steps-wrap").style.display = "none";
+  document.getElementById("gen-screen").style.display = "flex";
+  document.getElementById("nav-footer").style.display = "none";
+}
+
+function updateNav() {
+  // dots
+  const navMap = [0,1,2,3];
+  navMap.forEach((ni, i) => {
+    const dot = document.getElementById("dot-" + i);
+    if (!dot) return;
+    dot.className = "step-dot" + (currentStep > i ? " done" : currentStep === i ? " active" : "");
+  });
+  // sidebar items
+  for (let i = 0; i < 4; i++) {
+    const el = document.getElementById("nav-" + i);
+    if (!el) continue;
+    el.className = "nav-item" + (currentStep > i ? " done" : currentStep === i ? " active" : "");
+    el.querySelector(".nav-num").textContent = currentStep > i ? "✓" : i + 1;
+  }
+  // footer
+  document.getElementById("footer-step-name").textContent = STEP_NAMES[currentStep] || "";
+  const back = document.getElementById("btn-back");
+  const next = document.getElementById("btn-next");
+  back.style.opacity = currentStep === 0 ? "0" : "1";
+  back.style.pointerEvents = currentStep === 0 ? "none" : "auto";
+  if (currentStep === 2) {
+    next.textContent = "GENERATE BLUEPRINT →";
+  } else if (currentStep === 3) {
+    next.style.display = "none";
+    back.style.display = "none";
+  } else {
+    next.textContent = "CONTINUE →";
+    next.style.display = "";
+    back.style.display = "";
+  }
+  // add char button visibility
+  const addBtn = document.getElementById("btn-add-char");
+  if (addBtn) addBtn.style.display = currentStep === 0 ? "" : "none";
+  checkCanNext();
+}
+
+function checkCanNext() {
+  const btn = document.getElementById("btn-next");
+  if (!btn) return;
+  let ok = false;
+  if (currentStep === 0) ok = chars.every(c => c.name.trim() && c.desc.trim());
+  if (currentStep === 1) ok = (document.getElementById("v-desc")?.value?.trim()?.length > 0);
+  if (currentStep === 2) {
+    ok = (document.getElementById("s-setting")?.value?.trim()?.length > 0) &&
+         (document.getElementById("s-assign")?.value?.trim()?.length > 0);
+  }
+  btn.disabled = !ok;
+}
+
+function nextStep() {
+  if (currentStep === 2) { startGeneration(); return; }
+  currentStep++;
+  showStep(currentStep);
+  updateNav();
+  updateStats();
+  document.getElementById("main").scrollTop = 0;
+}
+
+function prevStep() {
+  if (currentStep <= 0) return;
+  currentStep--;
+  showStep(currentStep);
+  updateNav();
+  document.getElementById("main").scrollTop = 0;
+}
+
+function goToStep(n) {
+  if (n >= currentStep && n !== 3) return; // can only go back (or to completed steps)
+  currentStep = n;
+  showStep(n);
+  updateNav();
+  document.getElementById("main").scrollTop = 0;
+}
+
+/* ═══════════════════════════════════════════════════
+   CHARACTERS
+═══════════════════════════════════════════════════ */
+function addChar() {
+  chars.push({ id: nextId++, name: "", desc: "", role: "supporting", style: "Shonen", image: null });
+  activeChar = chars.length - 1;
+  renderCharTabs();
+  renderCharFields();
+  renderCastList();
+  updateStats();
+}
+
+function removeChar(idx) {
+  if (chars.length === 1) return;
+  chars.splice(idx, 1);
+  activeChar = Math.max(0, activeChar >= chars.length ? chars.length - 1 : activeChar);
+  renderCharTabs();
+  renderCharFields();
+  renderCastList();
+  updateStats();
+}
+
+function setActiveChar(idx) {
+  // save current fields first
+  saveCharFields();
+  activeChar = idx;
+  renderCharTabs();
+  renderCharFields();
+  renderCastList();
+}
+
+function saveCharFields() {
+  const c = chars[activeChar];
+  if (!c) return;
+  const n = document.getElementById("cf-name");
+  const d = document.getElementById("cf-desc");
+  const r = document.getElementById("cf-role");
+  if (n) c.name = n.value;
+  if (d) c.desc = d.value;
+  if (r) c.role = r.value;
+}
+
+function renderCharTabs() {
+  const tabs = document.getElementById("char-tabs");
+  if (!tabs) return;
+  tabs.innerHTML = chars.map((c, i) => `
+    <div class="char-tab ${i === activeChar ? "active" : ""}" onclick="setActiveChar(${i})">
+      ${c.name || "CHAR " + (i + 1)}
+    </div>
+  `).join("");
+}
+
+function renderCharFields() {
+  const c = chars[activeChar];
+  if (!c) return;
+  const fields = document.getElementById("char-fields");
+  fields.innerHTML = `
+    <div style="display:flex;gap:24px;align-items:flex-start;">
+      <div style="display:flex;flex-direction:column;align-items:center;">
+        <label class="fl">REF IMAGE</label>
+        <div class="img-upload" onclick="document.getElementById('img-input-${c.id}').click()">
+          <img id="char-img-${c.id}" src="" alt="" ${c.image ? 'style="display:block"' : ''}>
+          <div id="img-placeholder-${c.id}" ${c.image ? 'style="display:none"' : ''}>
+            <div class="upload-icon">⊕</div>
+            <div class="img-upload-hint">UPLOAD<br>REFERENCE</div>
+          </div>
+        </div>
+        <input type="file" accept="image/*" id="img-input-${c.id}" style="display:none" onchange="handleImg(${activeChar}, this)"/>
+        <div id="role-badge-${c.id}" class="role-badge rb-${c.role}">${c.role.toUpperCase()}</div>
+      </div>
+      <div style="flex:1;">
+        <div class="grid2" style="margin-bottom:16px;">
+          <div class="field">
+            <label class="fl">CHARACTER NAME <span class="req">*</span></label>
+            <input class="inp" id="cf-name" placeholder="e.g. Kaito, Ryuu..." value="${esc(c.name)}" oninput="onNameChange(this.value);checkCanNext()"/>
+          </div>
+          <div class="field">
+            <label class="fl">ROLE</label>
+            <select class="inp" id="cf-role" onchange="onRoleChange(this.value)">
+              <option value="protagonist" ${c.role==="protagonist"?"selected":""}>Protagonist</option>
+              <option value="antagonist"  ${c.role==="antagonist"?"selected":""}>Antagonist</option>
+              <option value="supporting"  ${c.role==="supporting"?"selected":""}>Supporting</option>
+              <option value="background"  ${c.role==="background"?"selected":""}>Background</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label class="fl">ANIMATION STYLE</label>
+          <div class="grid4">
+            ${ANIME_STYLES.map(s => `
+              <div class="opt-btn ${c.style===s?"active":""}" onclick="setCharStyle('${s}')">${s}</div>
+            `).join("")}
+          </div>
+        </div>
+        <div class="field" style="margin-bottom:0;">
+          <label class="fl">VISUAL DESCRIPTION <span class="req">*</span></label>
+          <textarea class="inp" id="cf-desc" rows="5"
+            placeholder="Describe appearance in detail — hair, eyes, outfit colors, distinctive features, how they move and carry themselves, fighting style, emotional tells..."
+            oninput="onDescChange(this.value);checkCanNext()">${esc(c.desc)}</textarea>
+        </div>
+      </div>
+    </div>
+    ${chars.length > 1 ? `
+    <div style="display:flex;justify-content:flex-end;margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">
+      <button class="btn btn-danger" onclick="removeChar(${activeChar})">✕ REMOVE CHARACTER</button>
+    </div>` : ""}
+  `;
+  if (c.image) {
+    const img = document.getElementById("char-img-" + c.id);
+    if (img) img.src = c.image;
+  }
+}
+
+function onNameChange(v) {
+  chars[activeChar].name = v;
+  renderCharTabs();
+  renderCastList();
+  updateStats();
+}
+function onDescChange(v) { chars[activeChar].desc = v; }
+function onRoleChange(v) {
+  chars[activeChar].role = v;
+  const badge = document.getElementById("role-badge-" + chars[activeChar].id);
+  if (badge) { badge.className = "role-badge rb-" + v; badge.textContent = v.toUpperCase(); }
+  renderCastList();
+}
+function setCharStyle(s) {
+  chars[activeChar].style = s;
+  renderCharFields();
+  // restore values
+  document.getElementById("cf-name").value = chars[activeChar].name;
+  document.getElementById("cf-desc").value = chars[activeChar].desc;
+  document.getElementById("cf-role").value = chars[activeChar].role;
+}
+
+function handleImg(idx, input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    chars[idx].image = ev.target.result;
+    const img = document.getElementById("char-img-" + chars[idx].id);
+    const ph  = document.getElementById("img-placeholder-" + chars[idx].id);
+    if (img) { img.src = ev.target.result; img.style.display = "block"; }
+    if (ph)  ph.style.display = "none";
+    renderCastList();
+  };
+  reader.readAsDataURL(file);
+}
+
+function renderCastList() {
+  const list = document.getElementById("cast-list");
+  const count = document.getElementById("cast-count");
+  if (count) count.textContent = chars.length;
+  list.innerHTML = chars.map((c, i) => `
+    <div class="char-chip ${i === activeChar && currentStep === 0 ? "active" : ""}"
+      onclick="${currentStep === 0 ? "setActiveChar(" + i + ")" : ""}">
+      <div class="char-avatar">
+        ${c.image ? `<img src="${c.image}" alt="">` : `<span>${c.name ? c.name[0].toUpperCase() : "?"}</span>`}
+      </div>
+      <div class="chip-info">
+        <div class="chip-name">${esc(c.name) || "Unnamed"}</div>
+        <div class="chip-role">${c.role.toUpperCase()}</div>
+      </div>
+    </div>
+  `).join("");
+}
+
+function updateCastRefBanner() {
+  const banner = document.getElementById("cast-ref-banner");
+  if (banner) banner.textContent = "CAST: " + chars.map(c => c.name || "Unnamed").join("  ·  ");
+}
+
+/* ═══════════════════════════════════════════════════
+   CLICK GRIDS
+═══════════════════════════════════════════════════ */
+function buildMotionGrid() {
+  const g = document.getElementById("motion-grid");
+  g.innerHTML = MOTION_TYPES.map(m => `
+    <div class="opt-btn ${m===selectedMotion?"active":""}" onclick="selectMotion('${m}')">${m}</div>
+  `).join("");
+}
+
+function selectMotion(m) {
+  selectedMotion = m;
+  document.querySelectorAll("#motion-grid .opt-btn").forEach(el => {
+    el.className = "opt-btn" + (el.textContent.trim() === m ? " active" : "");
+  });
+  updateStats();
+}
+
+function buildCameraGrid() {
+  const g = document.getElementById("camera-grid");
+  g.innerHTML = CAMERA_STYLES.map(c => `
+    <div class="opt-btn ${c===selectedCamera?"active-cyan":""}" onclick="selectCamera('${c}')">${c}</div>
+  `).join("");
+}
+
+function selectCamera(c) {
+  selectedCamera = c;
+  document.querySelectorAll("#camera-grid .opt-btn").forEach(el => {
+    el.className = "opt-btn" + (el.textContent.trim() === c ? " active-cyan" : "");
+  });
+  updateStats();
+}
+
+/* ═══════════════════════════════════════════════════
+   STATS
+═══════════════════════════════════════════════════ */
+function updateStats() {
+  const stChars  = document.getElementById("st-chars");
+  const stMotion = document.getElementById("st-motion");
+  const stDur    = document.getElementById("st-dur");
+  const stCam    = document.getElementById("st-cam");
+  if (stChars)  stChars.textContent  = chars.length;
+  if (stMotion) stMotion.textContent = selectedMotion.split("/")[0].trim();
+  if (stDur)    stDur.textContent    = document.getElementById("v-duration")?.value || 30;
+  if (stCam)    stCam.textContent    = selectedCamera.split("(")[0].trim();
+}
+
+/* ═══════════════════════════════════════════════════
+   GENERATION
+═══════════════════════════════════════════════════ */
+function startGeneration() {
+  saveCharFields();
+  updateCastRefBanner();
+  showGenerating();
+  updateNav();
+
+  let progress = 0;
+  const fill = document.getElementById("prog-fill");
+  const pct  = document.getElementById("prog-pct");
+  const tick = setInterval(() => {
+    progress += Math.random() * 9;
+    if (progress >= 90) { clearInterval(tick); progress = 90; }
+    fill.style.width = progress + "%";
+    pct.textContent = Math.round(progress) + "%";
+  }, 500);
+
+  const charBlock = chars.map(c =>
+    `• ${c.name} [${c.role}] — Style: ${c.style}\n  ${c.desc}`
+  ).join("\n\n");
+
+  const vDesc     = document.getElementById("v-desc").value;
+  const vBeats    = document.getElementById("v-beats").value;
+  const vDuration = document.getElementById("v-duration").value;
+  const sSetting  = document.getElementById("s-setting").value;
+  const sMood     = document.getElementById("s-mood").value;
+  const sAssign   = document.getElementById("s-assign").value;
+
+  const prompt = `You are an expert anime animation director. Produce a complete ANIMATION BLUEPRINT as JSON only (no markdown backticks, no preamble).
+
+CHARACTERS:
+${charBlock}
+
+VIDEO REFERENCE:
+Motion: ${selectedMotion} | Duration: ${vDuration}s
+${vDesc}
+Key beats: ${vBeats || "not specified"}
+
+SCENE:
+Setting: ${sSetting}
+Mood: ${sMood}
+Assignments: ${sAssign}
+Camera: ${selectedCamera}
+
+Return ONLY valid JSON matching this exact structure:
+{"title":"","synopsis":"","timeline":[{"beat":1,"timeRange":"0:00-0:05","character":"","action":"","poseKeywords":["","",""],"cameraAngle":"","emotionTag":"","sdPrompt":"","animationNotes":""}],"characterLoraGuide":[{"character":"","loraTrainingTips":"","consistencyNotes":"","keyVisualTraits":["",""]}],"pipelineStack":{"poseExtraction":"","characterLock":"","frameGeneration":"","videoAssembly":"","postProcessing":""},"productionWarnings":[""],"estimatedFrameCount":0,"difficultyRating":"Hard","proTips":[""]}`;
+
+  fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 1000,
+      messages: [{ role: "user", content: prompt }]
+    })
+  })
+  .then(r => r.json())
+  .then(data => {
+    clearInterval(tick);
+    fill.style.width = "100%";
+    pct.textContent = "100%";
+    const raw = (data.content || []).map(b => b.text || "").join("");
+    let parsed;
+    try { parsed = JSON.parse(raw.replace(/```json|```/g, "").trim()); }
+    catch { parsed = null; }
+    setTimeout(() => {
+      if (parsed && !parsed.error) renderOutput(parsed);
+      else renderError(raw || "Unknown error");
+    }, 600);
+  })
+  .catch(err => {
+    clearInterval(tick);
+    setTimeout(() => renderError(err.message), 400);
+  });
+}
+
+/* ═══════════════════════════════════════════════════
+   OUTPUT RENDER
+═══════════════════════════════════════════════════ */
+function renderOutput(r) {
+  currentStep = 3;
+  document.getElementById("gen-screen").style.display = "none";
+  document.getElementById("steps-wrap").style.display = "flex";
+  showStep(3);
+  updateNav();
+
+  const diffClass = "diff-" + (r.difficultyRating || "Hard");
+
+  const timelineHTML = (r.timeline || []).map((beat, i) => `
+    <div class="beat-row">
+      <div class="beat-hd" onclick="toggleBeat(${i})">
+        <div class="beat-num">${beat.beat}</div>
+        <div class="beat-time">${beat.timeRange || ""}</div>
+        <div class="beat-chr">${(beat.character || "").toUpperCase()}</div>
+        <div class="beat-cam">${beat.cameraAngle || ""}</div>
+        <div class="beat-tog" id="beat-tog-${i}">▼</div>
+      </div>
+      <div class="beat-bd" id="beat-bd-${i}">
+        <p class="beat-action">${esc(beat.action || "")}</p>
+        <div class="beat-tags">
+          ${(beat.poseKeywords || []).map(k => `<span class="btag btag-pose">${esc(k)}</span>`).join("")}
+          ${beat.emotionTag ? `<span class="btag btag-emotion">${esc(beat.emotionTag)}</span>` : ""}
+        </div>
+        <button class="sd-toggle" onclick="toggleSd(${i})">
+          <span id="sd-arr-${i}">▶</span> SD PROMPT
+        </button>
+        <div class="sd-box" id="sd-box-${i}">${esc(beat.sdPrompt || "")}</div>
+        ${beat.animationNotes ? `<p class="anim-note">💡 ${esc(beat.animationNotes)}</p>` : ""}
+      </div>
+    </div>
+  `).join("");
+
+  const loraHTML = (r.characterLoraGuide || []).map(g => `
+    <div class="lora-card">
+      <div class="lora-ch">
+        <div class="lora-name">${esc(g.character || "")}</div>
+        <div class="lora-tag">LORA GUIDE</div>
+      </div>
+      <div class="lora-body">
+        <div><div class="lora-fl">TRAINING TIPS</div><div class="lora-val">${esc(g.loraTrainingTips || "")}</div></div>
+        <div><div class="lora-fl">CONSISTENCY NOTES</div><div class="lora-val">${esc(g.consistencyNotes || "")}</div></div>
+        <div>
+          <div class="lora-fl">KEY VISUAL TRAITS</div>
+          <div class="trait-list">${(g.keyVisualTraits || []).map(t => `<span class="trait-chip">${esc(t)}</span>`).join("")}</div>
+        </div>
+      </div>
+    </div>
+  `).join("");
+
+  const pipeHTML = Object.entries(r.pipelineStack || {}).map(([k, v]) => `
+    <div class="pipe-row">
+      <div class="pipe-key">${k.replace(/([A-Z])/g," $1").toUpperCase().trim()}</div>
+      <div class="pipe-val">${esc(v)}</div>
+    </div>
+  `).join("");
+
+  const tipsHTML = (r.proTips || []).map(t => `<div class="tip-item">${esc(t)}</div>`).join("");
+  const warnHTML = (r.productionWarnings || []).map(w => `<div class="warn-item"><span>⚠</span><span>${esc(w)}</span></div>`).join("");
+
+  document.getElementById("output-screen").innerHTML = `
+    <div class="hero-card">
+      <div class="corner c-tl"></div><div class="corner c-tr"></div>
+      <div class="corner c-bl"></div><div class="corner c-br"></div>
+      <div class="hero-jp">アニメーション設計書</div>
+      <h1 class="hero-title">${esc(r.title || "")}</h1>
+      <p class="hero-syn">${esc(r.synopsis || "")}</p>
+      <div class="hero-meta">
+        <div class="meta-item">
+          <span class="meta-lbl">DIFFICULTY</span>
+          <span class="meta-val ${diffClass}">${r.difficultyRating || "—"}</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-lbl">EST. FRAMES</span>
+          <span class="meta-val" style="color:var(--cyan)">~${r.estimatedFrameCount || 0}</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-lbl">SCENE BEATS</span>
+          <span class="meta-val" style="color:var(--gold)">${(r.timeline || []).length}</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-lbl">CHARACTERS</span>
+          <span class="meta-val" style="color:var(--text)">${chars.length}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-head"><span class="section-title">SCENE TIMELINE</span></div>
+    <div style="margin-bottom:28px;">${timelineHTML}</div>
+
+    ${loraHTML ? `
+    <div class="section-head"><span class="section-title">CHARACTER CONSISTENCY GUIDE</span></div>
+    <div class="lora-grid" style="margin-bottom:28px;">${loraHTML}</div>
+    ` : ""}
+
+    ${pipeHTML ? `
+    <div class="section-head"><span class="section-title">RECOMMENDED PIPELINE</span></div>
+    <div style="margin-bottom:28px;">${pipeHTML}</div>
+    ` : ""}
+
+    ${(tipsHTML || warnHTML) ? `
+    <div class="tw-grid">
+      <div>
+        <div class="section-head"><span class="section-title">PRO TIPS</span></div>
+        ${tipsHTML}
+      </div>
+      <div>
+        <div class="section-head"><span class="section-title">WARNINGS</span></div>
+        ${warnHTML}
+      </div>
+    </div>
+    ` : ""}
+
+    <div style="text-align:center;padding:16px 0 32px;">
+      <button class="btn btn-primary" onclick="resetAll()">← NEW SCENE</button>
+    </div>
+  `;
+  document.getElementById("output-screen").style.display = "";
+  document.getElementById("error-screen").style.display = "none";
+  document.getElementById("main").scrollTop = 0;
+}
+
+function renderError(msg) {
+  currentStep = 3;
+  document.getElementById("gen-screen").style.display = "none";
+  document.getElementById("steps-wrap").style.display = "flex";
+  showStep(3);
+  updateNav();
+  document.getElementById("output-screen").style.display = "none";
+  document.getElementById("error-screen").style.display = "";
+  document.getElementById("error-msg").textContent = msg;
+}
+
+/* ═══════════════════════════════════════════════════
+   BEAT / SD TOGGLES
+═══════════════════════════════════════════════════ */
+function toggleBeat(i) {
+  const bd  = document.getElementById("beat-bd-"  + i);
+  const tog = document.getElementById("beat-tog-" + i);
+  if (!bd) return;
+  const open = bd.classList.toggle("open");
+  if (tog) tog.textContent = open ? "▲" : "▼";
+}
+
+function toggleSd(i) {
+  const box = document.getElementById("sd-box-" + i);
+  const arr = document.getElementById("sd-arr-" + i);
+  if (!box) return;
+  const open = box.classList.toggle("open");
+  if (arr) arr.textContent = open ? "▼" : "▶";
+}
+
+/* ═══════════════════════════════════════════════════
+   RESET
+═══════════════════════════════════════════════════ */
+function resetAll() {
+  currentStep   = 0;
+  activeChar    = 0;
+  selectedMotion = "Action / Fight";
+  selectedCamera = "Dynamic (follows action)";
+  chars = [{ id: 1, name: "", desc: "", role: "protagonist", style: "Shonen", image: null }];
+  nextId = 2;
+
+  document.getElementById("v-desc").value = "";
+  document.getElementById("v-beats").value = "";
+  document.getElementById("v-duration").value = "30";
+  document.getElementById("s-setting").value = "";
+  document.getElementById("s-mood").value = "";
+  document.getElementById("s-assign").value = "";
+  document.getElementById("output-screen").innerHTML = "";
+
+  buildMotionGrid();
+  buildCameraGrid();
+  renderCharTabs();
+  renderCharFields();
+  renderCastList();
+  updateStats();
+  showStep(0);
+  updateNav();
+
+  const next = document.getElementById("btn-next");
+  const back = document.getElementById("btn-back");
+  if (next) { next.style.display = ""; next.textContent = "CONTINUE →"; }
+  if (back) { back.style.display = ""; }
+  document.getElementById("nav-footer").style.display = "";
+  document.getElementById("main").scrollTop = 0;
+}
+
+/* ═══════════════════════════════════════════════════
+   UTILS
+═══════════════════════════════════════════════════ */
+function esc(str) {
+  if (!str) return "";
+  return String(str)
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;");
+}
+
+// live validation listeners
+document.addEventListener("input", e => {
+  const id = e.target?.id;
+  if (["v-desc","s-setting","s-assign"].includes(id)) checkCanNext();
+  if (id === "v-duration") updateStats();
+});
+</script>
+</body>
+</html>

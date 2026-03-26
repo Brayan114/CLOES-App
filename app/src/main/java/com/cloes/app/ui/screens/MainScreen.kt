@@ -16,8 +16,11 @@ import androidx.compose.ui.draw.*
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.*
 import androidx.compose.ui.unit.*
+import com.cloes.app.R
 import com.cloes.app.ui.components.*
 import com.cloes.app.ui.theme.*
 import com.cloes.app.viewmodel.AppViewModel
@@ -36,8 +39,14 @@ fun MainScreen(vm: AppViewModel) {
                 detectHorizontalDragGestures(
                     onDragStart = { totalDrag = 0f },
                     onDragEnd = {
-                        if (totalDrag > 70f && !vm.showSidePanel) vm.showSidePanel = true
-                        else if (totalDrag < -70f && vm.showSidePanel) vm.showSidePanel = false
+                        when {
+                            // RIGHT swipe: if side panel closed → cycle prev tab; if panel open → close it
+                            totalDrag > 70f && !vm.showSidePanel -> vm.swipeNavPrev()
+                            totalDrag > 70f && vm.showSidePanel  -> vm.showSidePanel = false
+                            // LEFT swipe: if panel closed → cycle next tab; don't close panel on left
+                            totalDrag < -70f && !vm.showSidePanel -> vm.swipeNavNext()
+                            totalDrag < -70f && vm.showSidePanel  -> vm.showSidePanel = false
+                        }
                     },
                     onHorizontalDrag = { _, amount -> totalDrag += amount }
                 )
@@ -64,7 +73,19 @@ fun MainScreen(vm: AppViewModel) {
                     icon = { Icon(Icons.Default.Menu, "Menu", tint = c.textMid, modifier = Modifier.size(20.dp)) },
                     onClick = { vm.showSidePanel = true }
                 )
-                // CLOES Logo
+                // CLOES Logo — uses crystal C image
+                Box(
+                    modifier = Modifier
+                        .size(34.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.cloes_logo),
+                        contentDescription = "CLOES",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                }
                 Text(
                     "CLOES",
                     style = androidx.compose.ui.text.TextStyle(
@@ -75,16 +96,39 @@ fun MainScreen(vm: AppViewModel) {
                     ),
                     modifier = Modifier.weight(1f)
                 )
+                // Tab indicator pills — show current position in swipe cycle
+                Row(horizontalArrangement = Arrangement.spacedBy(3.dp), verticalAlignment = Alignment.CenterVertically) {
+                    vm.navTabOrder.forEach { tab ->
+                        Box(
+                            modifier = Modifier
+                                .size(if (vm.currentTab == tab) 8.dp else 5.dp)
+                                .clip(CircleShape)
+                                .background(if (vm.currentTab == tab) Purple else c.border)
+                        )
+                    }
+                }
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    // Ghost mode indicator
+                    if (vm.ghostModeEnabled) {
+                        Box(
+                            modifier = Modifier
+                                .size(28.dp)
+                                .clip(CircleShape)
+                                .background(Purple.copy(0.2f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text("👻", fontSize = 14.sp)
+                        }
+                    }
                     // Emergency
                     NeuIconButton(
                         icon = { Icon(Icons.Default.Warning, "Emergency", tint = Color(0xFFEF4444), modifier = Modifier.size(18.dp)) },
                         onClick = { vm.showEmergency = true }
                     )
-                    // Profile / Settings
+                    // Profile
                     Box(
                         modifier = Modifier
                             .size(34.dp)
@@ -117,12 +161,13 @@ fun MainScreen(vm: AppViewModel) {
                         "muse"   -> MuseAIPage(vm)
                         "vibe"   -> VibePage(vm)
                         "coins"  -> CoinsPage(vm)
+                        "meet"   -> MeetPageTab(vm)
                         else     -> ChatsPage(vm)
                     }
                 }
             }
 
-            // ── Bottom Nav (auto-hides) ───────────────────────────────
+            // ── Bottom Nav ─────────────────────────────────────────────
             if (vm.navBarVisible) {
                 BottomNavBar(vm = vm, c = c, onHide = {
                     if (vm.disappearingNavEnabled) vm.navBarVisible = false
@@ -146,12 +191,7 @@ fun MainScreen(vm: AppViewModel) {
                         .clickable { vm.navBarVisible = true },
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(
-                        Icons.Default.KeyboardArrowUp,
-                        contentDescription = "Show Nav",
-                        tint = Color.White,
-                        modifier = Modifier.size(20.dp)
-                    )
+                    Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Show Nav", tint = Color.White, modifier = Modifier.size(20.dp))
                 }
             }
         }
@@ -166,7 +206,7 @@ fun MainScreen(vm: AppViewModel) {
             GroupChatView(vm)
         }
 
-        // ── Settings overlays (kept here so they appear above chat) ──────
+        // ── Settings ──────────────────────────────────────────────────────
         AnimatedVisibility(visible = vm.showSettings,
             enter = slideInHorizontally { it }, exit = slideOutHorizontally { it }) {
             SettingsOverlay(vm)
@@ -175,6 +215,12 @@ fun MainScreen(vm: AppViewModel) {
             enter = slideInHorizontally { it }, exit = slideOutHorizontally { it }) {
             EditContactOverlay(vm)
         }
+
+        // ── Bloom Ritual nudge ────────────────────────────────────────────
+        if (vm.showBloomRitual && vm.bloomRitualContact != null) {
+            BloomRitualNudge(vm = vm, contact = vm.bloomRitualContact!!)
+        }
+
         // ── Toast ─────────────────────────────────────────────────────────
         Box(modifier = Modifier.fillMaxWidth().align(Alignment.TopCenter)) {
             CloesToast(
@@ -200,12 +246,56 @@ fun MainScreen(vm: AppViewModel) {
             }
         }
 
-        // ── Demo toasts ───────────────────────────────────────────────────
+        // (Demo toasts removed — no placeholder contacts)
+
+        // ── Muse Bloom Ritual: show 3 min after sign-in, then every 6 min ─
         LaunchedEffect(Unit) {
-            delay(2000)
-            vm.showIncomingToast("Nova·△7", "need to talk to you NOW", "high")
-            delay(6000)
-            vm.showIncomingToast("Mum", "Call me when you get this", "low")
+            delay(3 * 60 * 1000L) // 3 minutes after sign-in
+            vm.checkBloomRituals()
+            while (true) {
+                delay(6 * 60 * 1000L) // repeat every 6 minutes
+                vm.checkBloomRituals()
+            }
+        }
+    }
+}
+
+// ── Bloom Ritual Nudge ──────────────────────────────────────────────────────
+@Composable
+private fun BloomRitualNudge(vm: AppViewModel, contact: com.cloes.app.data.Contact) {
+    val c = vm.themeColors
+    Box(
+        modifier = Modifier.fillMaxSize().background(Color.Black.copy(0.55f)),
+        contentAlignment = Alignment.BottomCenter
+    ) {
+        GlassCard(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+            Column(modifier = Modifier.padding(22.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text("🌸", fontSize = 28.sp)
+                    Column {
+                        Text("Bloom Ritual", color = c.text, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                        Text("Muse noticed something ✦", color = c.textSub, fontSize = 12.sp)
+                    }
+                }
+                Text(
+                    "Your connection with ${contact.name} has been fading. Their Bloom is at ${contact.bloomScore}. Want to send a quick voice note?",
+                    color = c.textMid, fontSize = 14.sp, lineHeight = 20.sp
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    GradientButton(
+                        text = "Send a note ✦",
+                        onClick = {
+                            vm.showBloomRitual = false
+                            vm.openChat(contact.id)
+                            vm.showToast(contact.name, "Tap the mic to send a voice note 🎙", "low")
+                        },
+                        modifier = Modifier.weight(1f)
+                    )
+                    OutlinedButton(onClick = { vm.showBloomRitual = false }) {
+                        Text("Later", color = c.textSub, fontSize = 13.sp)
+                    }
+                }
+            }
         }
     }
 }
@@ -215,12 +305,8 @@ private data class NavTab(val id: String, val label: String, val icon: ImageVect
 
 @Composable
 private fun BottomNavBar(vm: AppViewModel, c: CloesColors, onHide: () -> Unit = {}) {
-    // Auto-hide after 3 seconds if feature is enabled
     LaunchedEffect(vm.currentTab, vm.navBarVisible) {
-        if (vm.disappearingNavEnabled && vm.navBarVisible) {
-            delay(3000)
-            onHide()
-        }
+        if (vm.disappearingNavEnabled && vm.navBarVisible) { delay(3000); onHide() }
     }
     val tabs = listOf(
         NavTab("chats",  "Messages", Icons.Outlined.ChatBubbleOutline, Icons.Filled.ChatBubble),

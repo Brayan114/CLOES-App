@@ -3024,6 +3024,7 @@ drawable btn_radio_off_mtrl
 drawable btn_radio_off_to_on_mtrl_animation
 drawable btn_radio_on_mtrl
 drawable btn_radio_on_to_off_mtrl_animation
+drawable cloes_logo
 drawable common_full_open_on_phone
 drawable common_google_signin_btn_icon_dark
 drawable common_google_signin_btn_icon_dark_focused
@@ -3982,6 +3983,9 @@ plurals exo_controls_fastforward_by_amount_description
 plurals exo_controls_rewind_by_amount_description
 plurals mtrl_badge_content_description
 raw firebase_common_keep
+raw muse_on_it
+raw muse_sorry
+raw muse_yes
 string abc_action_bar_home_description
 string abc_action_bar_up_description
 string abc_action_menu_overflow_description

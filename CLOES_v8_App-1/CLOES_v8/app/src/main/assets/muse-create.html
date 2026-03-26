@@ -1,0 +1,1842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>MUSE CREATE</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f0eef8;
+    --glass: rgba(255,255,255,0.55);
+    --glass-border: rgba(255,255,255,0.8);
+    --nm-shadow-light: rgba(255,255,255,0.85);
+    --nm-shadow-dark: rgba(180,170,210,0.5);
+    --accent1: #FF3385;
+    --accent2: #33A1FF;
+    --accent-grad: linear-gradient(135deg, #FF3385, #33A1FF);
+    --purple: #8B5CF6;
+    --text: #1a1535;
+    --subtext: #7a7a9a;
+    --pink: #FF3385;
+    --teal: #33A1FF;
+    --red: #FF4B4B;
+    --yellow: #FFB800;
+    --green: #2ECC71;
+    --blue: #3A6BF0;
+    --deep-purple: #7B2FBE;
+    --hot-pink: #FF1F8E;
+    --card-radius: 22px;
+    --btn-radius: 16px;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* MESH GRADIENT BACKGROUND */
+  body::before {
+    content:'';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 10% 20%, rgba(255,100,200,0.18) 0%, transparent 55%),
+      radial-gradient(ellipse at 85% 10%, rgba(100,180,255,0.2) 0%, transparent 50%),
+      radial-gradient(ellipse at 60% 80%, rgba(150,100,255,0.15) 0%, transparent 50%),
+      radial-gradient(ellipse at 20% 85%, rgba(255,180,100,0.1) 0%, transparent 45%),
+      #f0eef8;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  /* ─── SCREENS ─── */
+  .screen { position: fixed; inset: 0; z-index: 1; overflow: hidden; display: none; flex-direction: column; }
+  .screen.active { display: flex; }
+
+  /* ─── SPLASH / HOME ─── */
+  #splash {
+    justify-content: center;
+    align-items: center;
+    gap: 0;
+  }
+
+  .splash-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 28px;
+    animation: fadeSlideUp 0.8s ease both;
+  }
+
+  .logo-mark {
+    width: 110px; height: 110px;
+    border-radius: 32px;
+    background: var(--accent-grad);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 12px 40px rgba(255,51,133,0.35), 0 4px 16px rgba(51,161,255,0.25);
+    position: relative;
+    overflow: hidden;
+  }
+  .logo-mark::before {
+    content:'';
+    position:absolute; inset:0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.25), transparent);
+  }
+  .logo-mark svg { width: 60px; height: 60px; fill: white; z-index:1; }
+
+  .app-name {
+    font-family: 'Nunito', sans-serif;
+    font-size: 42px;
+    font-weight: 900;
+    letter-spacing: -1px;
+    background: var(--accent-grad);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .app-tagline {
+    font-size: 15px;
+    color: var(--subtext);
+    font-weight: 500;
+    letter-spacing: 0.3px;
+    margin-top: -20px;
+  }
+
+  .color-swatch-row {
+    display: flex; gap: 10px;
+  }
+  .swatch {
+    width: 32px; height: 32px; border-radius: 50%;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  }
+
+  .splash-btns {
+    display: flex; flex-direction: column; gap: 14px; width: 280px;
+  }
+
+  .btn-primary {
+    width: 100%; padding: 17px;
+    background: var(--accent-grad);
+    border: none; border-radius: var(--btn-radius);
+    font-family: 'Nunito', sans-serif;
+    font-size: 17px; font-weight: 800;
+    color: white; cursor: pointer;
+    box-shadow: 0 8px 28px rgba(255,51,133,0.35), 0 2px 8px rgba(51,161,255,0.2);
+    transition: transform 0.15s, box-shadow 0.15s;
+    letter-spacing: 0.3px;
+  }
+  .btn-primary:active { transform: scale(0.97); box-shadow: 0 4px 14px rgba(255,51,133,0.25); }
+
+  .btn-secondary {
+    width: 100%; padding: 16px;
+    background: var(--glass);
+    backdrop-filter: blur(20px);
+    border: 1.5px solid var(--glass-border);
+    border-radius: var(--btn-radius);
+    font-family: 'Nunito', sans-serif;
+    font-size: 16px; font-weight: 700;
+    color: var(--text); cursor: pointer;
+    box-shadow: 6px 6px 14px var(--nm-shadow-dark), -4px -4px 10px var(--nm-shadow-light);
+    transition: transform 0.15s;
+  }
+  .btn-secondary:active { transform: scale(0.97); }
+
+  /* ─── CANVAS / EDITOR ─── */
+  #editor {
+    flex-direction: column;
+    background: transparent;
+  }
+
+  /* TOP BAR */
+  .top-bar {
+    display: flex;
+    align-items: center;
+    padding: 14px 16px 10px;
+    gap: 10px;
+    position: relative;
+    z-index: 10;
+  }
+
+  .nm-btn {
+    display: flex; align-items: center; justify-content: center;
+    background: var(--glass);
+    backdrop-filter: blur(20px);
+    border: 1.5px solid var(--glass-border);
+    border-radius: 14px;
+    box-shadow: 5px 5px 12px var(--nm-shadow-dark), -3px -3px 8px var(--nm-shadow-light);
+    cursor: pointer;
+    transition: all 0.15s;
+    color: var(--text);
+  }
+  .nm-btn:active { box-shadow: 2px 2px 6px var(--nm-shadow-dark), -1px -1px 4px var(--nm-shadow-light); transform: scale(0.96); }
+
+  .work-btn {
+    height: 42px;
+    padding: 0 18px;
+    gap: 7px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: 0.2px;
+  }
+
+  .more-btn {
+    width: 42px; height: 42px;
+    margin-left: auto;
+  }
+
+  .top-center {
+    flex: 1;
+    display: flex; align-items: center; justify-content: center;
+    gap: 8px;
+  }
+
+  .top-logo {
+    font-family: 'Nunito', sans-serif;
+    font-size: 18px;
+    font-weight: 900;
+    background: var(--accent-grad);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* CANVAS AREA */
+  .canvas-wrapper {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 16px;
+    position: relative;
+  }
+
+  .canvas-container {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(100,80,200,0.15), 0 4px 16px rgba(0,0,0,0.08);
+    border: 1.5px solid rgba(255,255,255,0.9);
+    overflow: hidden;
+    position: relative;
+    width: 100%;
+    max-width: 500px;
+    aspect-ratio: 16/9;
+  }
+
+  #drawCanvas {
+    width: 100%; height: 100%;
+    display: block;
+    cursor: crosshair;
+  }
+
+  /* ONION SKIN OVERLAY */
+  .onion-overlay {
+    position: absolute; inset: 0;
+    pointer-events: none;
+    opacity: 0.25;
+    display: none;
+  }
+  .onion-overlay.visible { display: block; }
+
+  /* TOOL FLOATING LABEL */
+  .active-tool-label {
+    position: absolute;
+    top: 10px; left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(10px);
+    color: white;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 5px 14px;
+    border-radius: 20px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s;
+    white-space: nowrap;
+  }
+  .active-tool-label.show { opacity: 1; }
+
+  /* BOTTOM TOOLBAR */
+  .bottom-bar {
+    padding: 10px 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    position: relative;
+    z-index: 10;
+  }
+
+  /* FRAME STRIP */
+  .frame-strip-wrap {
+    background: var(--glass);
+    backdrop-filter: blur(20px);
+    border: 1.5px solid var(--glass-border);
+    border-radius: 18px;
+    padding: 10px 12px;
+    box-shadow: 5px 5px 14px var(--nm-shadow-dark), -3px -3px 8px var(--nm-shadow-light);
+    overflow: hidden;
+  }
+
+  .frame-strip-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 8px;
+  }
+
+  .frame-strip-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--subtext);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .frame-strip-controls {
+    display: flex; gap: 6px;
+  }
+
+  .frame-mini-btn {
+    width: 26px; height: 26px;
+    border-radius: 8px;
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    box-shadow: 3px 3px 7px var(--nm-shadow-dark), -2px -2px 5px var(--nm-shadow-light);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 14px;
+    transition: all 0.15s;
+  }
+  .frame-mini-btn:active { transform: scale(0.93); }
+
+  .frame-strip {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-bottom: 2px;
+  }
+  .frame-strip::-webkit-scrollbar { display: none; }
+
+  .frame-thumb {
+    flex-shrink: 0;
+    width: 56px; height: 38px;
+    border-radius: 10px;
+    background: #f5f5fa;
+    border: 2px solid transparent;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.2s;
+    box-shadow: 3px 3px 8px var(--nm-shadow-dark), -2px -2px 6px var(--nm-shadow-light);
+  }
+  .frame-thumb.active {
+    border-color: var(--accent1);
+    box-shadow: 0 0 0 2px rgba(255,51,133,0.3), 3px 3px 8px var(--nm-shadow-dark);
+  }
+  .frame-thumb canvas { width:100%; height:100%; display:block; }
+  .frame-thumb .frame-num {
+    position: absolute; bottom: 2px; right: 4px;
+    font-size: 9px; font-weight: 700; color: var(--subtext);
+  }
+
+  .add-frame-btn {
+    flex-shrink: 0;
+    width: 56px; height: 38px;
+    border-radius: 10px;
+    background: var(--glass);
+    border: 2px dashed rgba(255,51,133,0.35);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    font-size: 20px;
+    color: var(--accent1);
+    transition: all 0.2s;
+  }
+  .add-frame-btn:active { transform: scale(0.93); }
+
+  /* MAIN TOOLS ROW */
+  .tools-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--glass);
+    backdrop-filter: blur(20px);
+    border: 1.5px solid var(--glass-border);
+    border-radius: 20px;
+    padding: 10px 14px;
+    box-shadow: 5px 5px 14px var(--nm-shadow-dark), -3px -3px 8px var(--nm-shadow-light);
+  }
+
+  .tool-btn {
+    width: 44px; height: 44px;
+    border-radius: 13px;
+    background: var(--glass);
+    border: 1.5px solid var(--glass-border);
+    box-shadow: 4px 4px 10px var(--nm-shadow-dark), -2px -2px 6px var(--nm-shadow-light);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    font-size: 19px;
+    transition: all 0.15s;
+    flex-shrink: 0;
+    position: relative;
+  }
+  .tool-btn.active {
+    background: var(--accent-grad);
+    border-color: transparent;
+    box-shadow: 0 4px 16px rgba(255,51,133,0.4);
+  }
+  .tool-btn.active .tool-icon { filter: brightness(0) invert(1); }
+  .tool-btn:active { transform: scale(0.92); }
+
+  .tool-divider {
+    width: 1px; height: 30px;
+    background: rgba(150,140,190,0.2);
+    flex-shrink: 0;
+  }
+
+  /* COLOR PICKER ROW */
+  .color-row {
+    display: flex; align-items: center; gap: 7px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    flex: 1;
+  }
+  .color-row::-webkit-scrollbar { display: none; }
+
+  .color-dot {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    cursor: pointer;
+    border: 2.5px solid transparent;
+    transition: all 0.15s;
+    box-shadow: 2px 2px 6px rgba(0,0,0,0.15);
+  }
+  .color-dot.active { border-color: rgba(0,0,0,0.3); transform: scale(1.15); }
+
+  .color-dot.rainbow {
+    background: conic-gradient(red, yellow, lime, cyan, blue, magenta, red);
+  }
+
+  /* BRUSH SIZE */
+  .brush-size-wrap {
+    display: flex; align-items: center; gap: 8px;
+  }
+  .size-slider {
+    -webkit-appearance: none;
+    width: 80px; height: 4px;
+    border-radius: 4px;
+    background: linear-gradient(to right, var(--accent1), var(--accent2));
+    outline: none;
+  }
+  .size-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: white;
+    box-shadow: 0 2px 8px rgba(255,51,133,0.4);
+    cursor: pointer;
+  }
+
+  /* PLAYBACK */
+  .playback-row {
+    display: flex; align-items: center; justify-content: center; gap: 12px;
+  }
+  .play-btn {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    background: var(--accent-grad);
+    border: none;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(255,51,133,0.35);
+    transition: transform 0.15s;
+    font-size: 18px;
+  }
+  .play-btn:active { transform: scale(0.93); }
+
+  /* ─── OVERLAYS & PANELS ─── */
+  .overlay {
+    position: fixed; inset: 0;
+    z-index: 50;
+    display: none;
+  }
+  .overlay.open { display: flex; }
+
+  .overlay-backdrop {
+    position: absolute; inset: 0;
+    background: rgba(20,15,40,0.35);
+    backdrop-filter: blur(4px);
+  }
+
+  .panel {
+    position: absolute;
+    background: rgba(255,255,255,0.7);
+    backdrop-filter: blur(30px);
+    border: 1.5px solid var(--glass-border);
+    box-shadow: 0 20px 60px rgba(100,80,200,0.2);
+    animation: slideIn 0.3s cubic-bezier(0.34,1.56,0.64,1) both;
+  }
+
+  /* SIDEBAR (right) */
+  .sidebar-panel {
+    right: 0; top: 0; bottom: 0;
+    width: 280px;
+    border-radius: 24px 0 0 24px;
+    padding: 60px 20px 30px;
+    display: flex; flex-direction: column; gap: 12px;
+    overflow-y: auto;
+  }
+  @keyframes slideIn {
+    from { opacity:0; transform: translateX(30px); }
+    to { opacity:1; transform: translateX(0); }
+  }
+
+  .sidebar-title {
+    font-family: 'Nunito', sans-serif;
+    font-size: 22px; font-weight: 900;
+    background: var(--accent-grad);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 4px;
+  }
+
+  .sidebar-item {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 16px;
+    background: rgba(255,255,255,0.6);
+    border: 1.5px solid rgba(255,255,255,0.8);
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.15s;
+    box-shadow: 4px 4px 10px var(--nm-shadow-dark), -2px -2px 6px var(--nm-shadow-light);
+  }
+  .sidebar-item:active { transform: scale(0.97); }
+
+  .sidebar-item-icon {
+    width: 38px; height: 38px;
+    border-radius: 11px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  .sidebar-item-text h4 {
+    font-family: 'Nunito', sans-serif;
+    font-size: 15px; font-weight: 800;
+    color: var(--text);
+  }
+  .sidebar-item-text p {
+    font-size: 12px; color: var(--subtext); font-weight: 400;
+    margin-top: 1px;
+  }
+
+  /* WORK PANEL (bottom sheet) */
+  .work-panel {
+    bottom: 0; left: 0; right: 0;
+    border-radius: 28px 28px 0 0;
+    padding: 24px 20px 40px;
+    max-height: 80vh;
+    overflow-y: auto;
+    animation: slideUp 0.3s cubic-bezier(0.34,1.56,0.64,1) both;
+  }
+  @keyframes slideUp {
+    from { opacity:0; transform: translateY(40px); }
+    to { opacity:1; transform: translateY(0); }
+  }
+
+  .panel-handle {
+    width: 40px; height: 4px;
+    background: rgba(150,140,190,0.35);
+    border-radius: 4px;
+    margin: 0 auto 20px;
+  }
+
+  .panel-title {
+    font-family: 'Nunito', sans-serif;
+    font-size: 20px; font-weight: 900;
+    color: var(--text);
+    margin-bottom: 16px;
+  }
+
+  /* GRID SECTIONS */
+  .panel-section { margin-bottom: 20px; }
+  .section-label {
+    font-size: 11px; font-weight: 700;
+    color: var(--subtext);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+  }
+
+  .panel-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .panel-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+
+  .panel-card {
+    background: rgba(255,255,255,0.65);
+    border: 1.5px solid rgba(255,255,255,0.85);
+    border-radius: 16px;
+    padding: 14px 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+    box-shadow: 4px 4px 10px var(--nm-shadow-dark), -2px -2px 6px var(--nm-shadow-light);
+    display: flex; flex-direction: column; align-items: flex-start; gap: 8px;
+  }
+  .panel-card:active { transform: scale(0.96); }
+  .panel-card.active-card {
+    border-color: var(--accent1);
+    box-shadow: 0 0 0 2px rgba(255,51,133,0.2), 4px 4px 10px var(--nm-shadow-dark);
+  }
+
+  .panel-card-icon { font-size: 22px; }
+  .panel-card-name {
+    font-family: 'Nunito', sans-serif;
+    font-size: 13px; font-weight: 800;
+    color: var(--text);
+  }
+  .panel-card-sub { font-size: 11px; color: var(--subtext); }
+
+  /* TOGGLE */
+  .toggle-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 16px;
+    background: rgba(255,255,255,0.65);
+    border: 1.5px solid rgba(255,255,255,0.85);
+    border-radius: 16px;
+    box-shadow: 4px 4px 10px var(--nm-shadow-dark), -2px -2px 6px var(--nm-shadow-light);
+    margin-bottom: 10px;
+  }
+  .toggle-info { display: flex; align-items: center; gap: 12px; }
+  .toggle-icon { font-size: 20px; width: 32px; text-align: center; }
+  .toggle-label { font-family:'Nunito',sans-serif; font-size:14px; font-weight:700; color:var(--text); }
+  .toggle-sub { font-size:11px; color:var(--subtext); margin-top:1px; }
+
+  .toggle {
+    width: 48px; height: 28px;
+    border-radius: 14px;
+    background: rgba(180,170,210,0.3);
+    position: relative;
+    cursor: pointer;
+    transition: background 0.3s;
+    flex-shrink: 0;
+  }
+  .toggle.on { background: var(--accent-grad); }
+  .toggle::after {
+    content:'';
+    position: absolute;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: white;
+    top: 3px; left: 3px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .toggle.on::after { transform: translateX(20px); }
+
+  /* CANVAS SIZE */
+  .canvas-preset {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 14px;
+    background: rgba(255,255,255,0.65);
+    border: 1.5px solid rgba(255,255,255,0.85);
+    border-radius: 14px;
+    cursor: pointer;
+    margin-bottom: 8px;
+    box-shadow: 3px 3px 8px var(--nm-shadow-dark), -2px -2px 5px var(--nm-shadow-light);
+    transition: all 0.15s;
+  }
+  .canvas-preset.active { border-color: var(--accent1); }
+  .canvas-preset:active { transform: scale(0.97); }
+  .preset-icon { font-size:18px; width:28px; text-align:center; }
+  .preset-name { font-family:'Nunito',sans-serif; font-size:14px; font-weight:800; color:var(--text); }
+  .preset-size { font-size:12px; color:var(--subtext); }
+
+  /* LAYER PANEL */
+  .layer-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 14px;
+    background: rgba(255,255,255,0.65);
+    border: 1.5px solid rgba(255,255,255,0.85);
+    border-radius: 14px;
+    cursor: pointer;
+    margin-bottom: 8px;
+    box-shadow: 3px 3px 8px var(--nm-shadow-dark), -2px -2px 5px var(--nm-shadow-light);
+  }
+  .layer-thumb {
+    width: 44px; height: 30px;
+    border-radius: 8px;
+    background: #f5f5fa;
+    border: 1px solid rgba(180,170,210,0.2);
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .layer-name { font-family:'Nunito',sans-serif; font-size:14px; font-weight:700; color:var(--text); flex:1; }
+  .layer-opacity { font-size:12px; color:var(--subtext); }
+
+  /* GESTURE GUIDE */
+  .gesture-card {
+    padding: 12px 14px;
+    background: rgba(255,255,255,0.6);
+    border: 1.5px solid rgba(255,255,255,0.85);
+    border-radius: 14px;
+    margin-bottom: 8px;
+    box-shadow: 3px 3px 8px var(--nm-shadow-dark);
+  }
+  .gesture-name { font-family:'Nunito',sans-serif; font-size:13px; font-weight:800; color:var(--text); }
+  .gesture-desc { font-size:12px; color:var(--subtext); margin-top:3px; }
+
+  /* NOTIFICATIONS / TOASTS */
+  .toast {
+    position: fixed;
+    bottom: 120px; left: 50%; transform: translateX(-50%);
+    background: rgba(26,21,53,0.85);
+    backdrop-filter: blur(20px);
+    color: white;
+    font-size: 13px; font-weight: 600;
+    padding: 10px 20px;
+    border-radius: 20px;
+    z-index: 999;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+  }
+  .toast.show { opacity: 1; }
+
+  /* ANIMATIONS */
+  @keyframes fadeSlideUp {
+    from { opacity:0; transform:translateY(30px); }
+    to { opacity:1; transform:translateY(0); }
+  }
+
+  /* BRUSH PANEL */
+  .brush-item {
+    padding: 10px 14px;
+    border-radius: 14px;
+    background: rgba(255,255,255,0.65);
+    border: 1.5px solid rgba(255,255,255,0.85);
+    cursor: pointer;
+    display: flex; align-items: center; gap: 12px;
+    box-shadow: 3px 3px 8px var(--nm-shadow-dark), -2px -2px 5px var(--nm-shadow-light);
+    transition: all 0.15s;
+    margin-bottom: 8px;
+  }
+  .brush-item.active { border-color: var(--accent1); }
+  .brush-preview {
+    width: 80px; height: 8px;
+    border-radius: 4px;
+    background: var(--text);
+  }
+  .brush-name { font-family:'Nunito',sans-serif; font-size:14px; font-weight:700; color:var(--text); flex:1; }
+
+  /* SUBSCRIPTION BADGE */
+  .badge-pro {
+    font-size: 10px; font-weight: 800;
+    padding: 2px 7px;
+    background: var(--accent-grad);
+    color: white;
+    border-radius: 6px;
+    letter-spacing: 0.3px;
+  }
+
+  /* FPS COUNTER */
+  .fps-tag {
+    background: rgba(255,255,255,0.7);
+    border: 1px solid rgba(255,255,255,0.9);
+    border-radius: 8px;
+    padding: 3px 8px;
+    font-size: 11px; font-weight: 700;
+    color: var(--subtext);
+    backdrop-filter: blur(10px);
+  }
+
+  /* AUDIO WAVEFORM */
+  .waveform {
+    height: 36px;
+    background: rgba(255,255,255,0.5);
+    border-radius: 10px;
+    display: flex; align-items: center;
+    padding: 0 10px;
+    gap: 3px;
+    overflow: hidden;
+  }
+  .wave-bar {
+    flex: 1;
+    border-radius: 2px;
+    background: var(--accent-grad);
+    min-height: 4px;
+  }
+
+  /* SCROLL helper */
+  .scroll-x { overflow-x: auto; scrollbar-width: none; }
+  .scroll-x::-webkit-scrollbar { display: none; }
+
+  /* INPUT */
+  .nm-input {
+    width: 100%;
+    padding: 12px 16px;
+    background: rgba(255,255,255,0.5);
+    border: 1.5px solid rgba(255,255,255,0.8);
+    border-radius: 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px; color: var(--text);
+    box-shadow: inset 3px 3px 8px rgba(180,170,210,0.25), inset -2px -2px 5px rgba(255,255,255,0.7);
+    outline: none;
+  }
+  .nm-input::placeholder { color: var(--subtext); }
+
+  /* BOTTOM NAV INDICATOR */
+  .bottom-safe { height: env(safe-area-inset-bottom, 0px); }
+
+  /* SELECT MODE */
+  .select-mode-banner {
+    position: absolute;
+    top: 10px; left: 50%;
+    transform: translateX(-50%);
+    background: var(--accent-grad);
+    color: white;
+    font-family: 'Nunito', sans-serif;
+    font-size: 13px; font-weight: 800;
+    padding: 7px 18px;
+    border-radius: 20px;
+    display: none;
+    gap: 10px;
+    align-items: center;
+    z-index: 20;
+    white-space: nowrap;
+    box-shadow: 0 4px 16px rgba(255,51,133,0.35);
+  }
+  .select-mode-banner.show { display: flex; }
+
+</style>
+</head>
+<body>
+
+<!-- ─── SPLASH SCREEN ─── -->
+<div id="splash" class="screen active">
+  <div class="splash-content">
+    <div class="logo-mark">
+      <svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+        <path d="M10 42 Q15 20 25 28 Q30 32 35 18 Q40 8 45 28 Q48 38 50 42" stroke="white" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+        <circle cx="30" cy="14" r="5" fill="white" opacity="0.9"/>
+        <path d="M18 48 L42 48" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+        <path d="M23 48 L23 54 M37 48 L37 54" stroke="white" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div>
+      <div class="app-name">MUSE CREATE</div>
+      <div class="app-tagline">Frame-by-frame animation, reimagined</div>
+    </div>
+    <div class="color-swatch-row">
+      <div class="swatch" style="background:#FF4B4B"></div>
+      <div class="swatch" style="background:#FFB800"></div>
+      <div class="swatch" style="background:#2ECC71"></div>
+      <div class="swatch" style="background:#3A6BF0"></div>
+      <div class="swatch" style="background:#7B2FBE"></div>
+      <div class="swatch" style="background:#FF1F8E"></div>
+    </div>
+    <div class="splash-btns">
+      <button class="btn-primary" onclick="goToEditor()">✦ Start Creating</button>
+      <button class="btn-secondary" onclick="goToEditor()">Open Project</button>
+    </div>
+    <div style="font-size:12px;color:var(--subtext);">Free · Plus available from $4.99/mo</div>
+  </div>
+</div>
+
+<!-- ─── EDITOR SCREEN ─── -->
+<div id="editor" class="screen">
+
+  <!-- TOP BAR -->
+  <div class="top-bar">
+    <!-- WORK BUTTON -->
+    <button class="nm-btn work-btn" onclick="openPanel('work-overlay')">
+      <span style="font-size:16px">⚙</span>
+      <span>WORK</span>
+    </button>
+
+    <div class="top-center">
+      <div class="top-logo">MUSE CREATE</div>
+      <div class="fps-tag" id="fps-tag">12 FPS</div>
+    </div>
+
+    <!-- MORE BUTTON -->
+    <button class="nm-btn more-btn" onclick="openPanel('more-overlay')">
+      <span style="font-size:18px">···</span>
+    </button>
+  </div>
+
+  <!-- CANVAS -->
+  <div class="canvas-wrapper">
+    <div class="canvas-container" id="canvas-container">
+      <canvas id="drawCanvas"></canvas>
+
+      <!-- Onion skin overlay (ghost frames) -->
+      <canvas id="onionCanvas" class="onion-overlay" style="position:absolute;inset:0;width:100%;height:100%;"></canvas>
+
+      <!-- Active tool label -->
+      <div class="active-tool-label" id="toolLabel"></div>
+
+      <!-- Select mode banner -->
+      <div class="select-mode-banner" id="selectBanner">
+        ✦ Select Mode · Tap to copy, move, or share
+        <button onclick="exitSelect()" style="background:rgba(255,255,255,0.25);border:none;border-radius:8px;color:white;font-size:11px;padding:3px 8px;cursor:pointer;">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM BAR -->
+  <div class="bottom-bar">
+
+    <!-- FRAME STRIP -->
+    <div class="frame-strip-wrap">
+      <div class="frame-strip-header">
+        <div class="frame-strip-title">Frames</div>
+        <div class="frame-strip-controls">
+          <div class="frame-mini-btn" onclick="togglePlay()" id="playPauseBtn" title="Play">▶</div>
+          <div class="frame-mini-btn" onclick="duplicateFrame()" title="Duplicate">⎘</div>
+          <div class="frame-mini-btn" onclick="deleteFrame()" title="Delete">✕</div>
+        </div>
+      </div>
+      <div class="frame-strip" id="frameStrip"></div>
+    </div>
+
+    <!-- TOOLS ROW -->
+    <div class="tools-row">
+      <!-- Drawing Tools -->
+      <div class="tool-btn active" id="tool-pen" onclick="selectTool('pen','✏️ Pen')" title="Pen">
+        <span class="tool-icon">✏️</span>
+      </div>
+      <div class="tool-btn" id="tool-pencil" onclick="selectTool('pencil','🖍 Pencil')" title="Pencil">
+        <span class="tool-icon">🖍</span>
+      </div>
+      <div class="tool-btn" id="tool-brush" onclick="selectTool('brush','🖌 Brush')" title="Brush">
+        <span class="tool-icon">🖌</span>
+      </div>
+      <div class="tool-btn" id="tool-fill" onclick="selectTool('fill','🪣 Smart Fill')" title="Smart Fill">
+        <span class="tool-icon">🪣</span>
+      </div>
+      <div class="tool-btn" id="tool-eraser" onclick="selectTool('eraser','◻ Eraser')" title="Eraser">
+        <span class="tool-icon">◻</span>
+      </div>
+
+      <div class="tool-divider"></div>
+
+      <!-- Selection & Shape -->
+      <div class="tool-btn" id="tool-lasso" onclick="selectTool('lasso','🔲 Lasso')" title="Lasso">
+        <span class="tool-icon">⬚</span>
+      </div>
+      <div class="tool-btn" id="tool-ruler" onclick="selectTool('ruler','📐 Ruler')" title="Ruler & Shapes">
+        <span class="tool-icon">📐</span>
+      </div>
+
+      <div class="tool-divider"></div>
+
+      <!-- Brush size -->
+      <div class="brush-size-wrap">
+        <input type="range" class="size-slider" min="1" max="40" value="4" id="brushSize" oninput="updateBrushSize(this.value)">
+      </div>
+    </div>
+
+    <!-- COLOR & EXTRAS ROW -->
+    <div class="tools-row" style="padding: 8px 14px;">
+      <div class="color-row" id="colorRow">
+        <div class="color-dot active" style="background:#1a1535" onclick="selectColor('#1a1535',this)"></div>
+        <div class="color-dot" style="background:#FF4B4B" onclick="selectColor('#FF4B4B',this)"></div>
+        <div class="color-dot" style="background:#FF3385" onclick="selectColor('#FF3385',this)"></div>
+        <div class="color-dot" style="background:#FF1F8E" onclick="selectColor('#FF1F8E',this)"></div>
+        <div class="color-dot" style="background:#FFB800" onclick="selectColor('#FFB800',this)"></div>
+        <div class="color-dot" style="background:#2ECC71" onclick="selectColor('#2ECC71',this)"></div>
+        <div class="color-dot" style="background:#33A1FF" onclick="selectColor('#33A1FF',this)"></div>
+        <div class="color-dot" style="background:#3A6BF0" onclick="selectColor('#3A6BF0',this)"></div>
+        <div class="color-dot" style="background:#7B2FBE" onclick="selectColor('#7B2FBE',this)"></div>
+        <div class="color-dot" style="background:#ffffff;border:2px solid #ddd" onclick="selectColor('#ffffff',this)"></div>
+        <div class="color-dot rainbow" onclick="openPanel('work-overlay')"></div>
+      </div>
+      <div class="tool-divider"></div>
+      <div class="tool-btn" id="tool-layers" onclick="openPanel('layers-overlay')" title="Layers" style="width:38px;height:38px;">
+        <span class="tool-icon" style="font-size:16px">▤</span>
+      </div>
+      <div class="tool-btn" id="tool-audio" onclick="openPanel('audio-overlay')" title="Audio" style="width:38px;height:38px;">
+        <span class="tool-icon" style="font-size:16px">🔊</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     OVERLAY: MORE SIDEBAR
+══════════════════════════════════════ -->
+<div class="overlay" id="more-overlay">
+  <div class="overlay-backdrop" onclick="closePanel('more-overlay')"></div>
+  <div class="panel sidebar-panel">
+    <div class="sidebar-title">More</div>
+
+    <div class="sidebar-item" onclick="doAction('share')">
+      <div class="sidebar-item-icon" style="background:linear-gradient(135deg,#FF3385,#FF8C00);">📤</div>
+      <div class="sidebar-item-text">
+        <h4>Share</h4>
+        <p>Share to social or send a link</p>
+      </div>
+    </div>
+
+    <div class="sidebar-item" onclick="doAction('export')">
+      <div class="sidebar-item-icon" style="background:linear-gradient(135deg,#33A1FF,#7B2FBE);">⬇️</div>
+      <div class="sidebar-item-text">
+        <h4>Export</h4>
+        <p>MP4, GIF, PNG sequence</p>
+      </div>
+    </div>
+
+    <div class="sidebar-item" onclick="doAction('select-copy')">
+      <div class="sidebar-item-icon" style="background:linear-gradient(135deg,#2ECC71,#33A1FF);">⎘</div>
+      <div class="sidebar-item-text">
+        <h4>Select & Copy</h4>
+        <p>Copy selection to any frame</p>
+      </div>
+    </div>
+
+    <div class="sidebar-item" onclick="doAction('paste')">
+      <div class="sidebar-item-icon" style="background:linear-gradient(135deg,#FFB800,#FF4B4B);">📋</div>
+      <div class="sidebar-item-text">
+        <h4>Paste</h4>
+        <p>Paste into current or new project</p>
+      </div>
+    </div>
+
+    <div style="height:1px;background:rgba(150,140,190,0.15);margin:4px 0;"></div>
+
+    <div class="sidebar-item" onclick="openExportPanel()">
+      <div class="sidebar-item-icon" style="background:linear-gradient(135deg,#7B2FBE,#FF3385);">🎬</div>
+      <div class="sidebar-item-text">
+        <h4>Export Format</h4>
+        <p>MP4 · GIF · PNG · TikTok · YouTube</p>
+      </div>
+    </div>
+
+    <div class="sidebar-item" onclick="doAction('rotoscope')">
+      <div class="sidebar-item-icon" style="background:linear-gradient(135deg,#3A6BF0,#2ECC71);">🎞</div>
+      <div class="sidebar-item-text">
+        <h4>Import Video / Photo</h4>
+        <p>Draw over video (rotoscoping)</p>
+      </div>
+    </div>
+
+    <div class="sidebar-item" onclick="doAction('lipsync')">
+      <div class="sidebar-item-icon" style="background:linear-gradient(135deg,#FF1F8E,#FFB800);">👄</div>
+      <div class="sidebar-item-text">
+        <h4>Lip Sync</h4>
+        <p>Match frames to audio waveform</p>
+      </div>
+    </div>
+
+    <div class="sidebar-item" onclick="doAction('gestures')">
+      <div class="sidebar-item-icon" style="background:rgba(150,140,210,0.25);">🤌</div>
+      <div class="sidebar-item-text">
+        <h4>Gesture Guide</h4>
+        <p>Quick-action shortcuts</p>
+      </div>
+    </div>
+
+    <div style="height:1px;background:rgba(150,140,190,0.15);margin:4px 0;"></div>
+
+    <div class="sidebar-item" onclick="closePanel('more-overlay');goToSplash()">
+      <div class="sidebar-item-icon" style="background:rgba(150,140,210,0.2);">🏠</div>
+      <div class="sidebar-item-text">
+        <h4>Home</h4>
+        <p>Back to project gallery</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     OVERLAY: WORK PANEL (Settings)
+══════════════════════════════════════ -->
+<div class="overlay" id="work-overlay">
+  <div class="overlay-backdrop" onclick="closePanel('work-overlay')"></div>
+  <div class="panel work-panel">
+    <div class="panel-handle"></div>
+    <div class="panel-title">⚙ Work Settings</div>
+
+    <!-- Toggles -->
+    <div class="panel-section">
+      <div class="section-label">Options</div>
+
+      <div class="toggle-row">
+        <div class="toggle-info">
+          <div class="toggle-icon">👻</div>
+          <div>
+            <div class="toggle-label">Onion Skinning</div>
+            <div class="toggle-sub">Show ghost frames for motion tracking</div>
+          </div>
+        </div>
+        <div class="toggle" id="onionToggle" onclick="toggleOnion(this)"></div>
+      </div>
+
+      <div class="toggle-row">
+        <div class="toggle-info">
+          <div class="toggle-icon">✋</div>
+          <div>
+            <div class="toggle-label">Left-Handed Mode</div>
+            <div class="toggle-sub">Mirror toolbar layout</div>
+          </div>
+        </div>
+        <div class="toggle" id="leftHandToggle" onclick="toggleFeature(this,'Left-Handed Mode')"></div>
+      </div>
+
+      <div class="toggle-row">
+        <div class="toggle-info">
+          <div class="toggle-icon">🎵</div>
+          <div>
+            <div class="toggle-label">Audio Import</div>
+            <div class="toggle-sub">Allow audio from library</div>
+          </div>
+        </div>
+        <div class="toggle on" id="audioToggle" onclick="toggleFeature(this,'Audio Import')"></div>
+      </div>
+
+      <div class="toggle-row">
+        <div class="toggle-info">
+          <div class="toggle-icon">🤌</div>
+          <div>
+            <div class="toggle-label">Quick-Action Gestures</div>
+            <div class="toggle-sub">Pinch, tap, swipe shortcuts</div>
+          </div>
+        </div>
+        <div class="toggle on" id="gestureToggle" onclick="toggleFeature(this,'Gestures')"></div>
+      </div>
+    </div>
+
+    <!-- Canvas Size -->
+    <div class="panel-section">
+      <div class="section-label">Canvas Size</div>
+
+      <div style="display:flex;gap:10px;margin-bottom:10px;align-items:center;">
+        <div style="flex:1;">
+          <div style="font-size:11px;color:var(--subtext);margin-bottom:5px;">Width (px)</div>
+          <input class="nm-input" type="number" value="1280" id="canvasW" style="padding:10px 14px;font-size:15px;font-weight:700;">
+        </div>
+        <div style="margin-top:16px;font-size:20px;color:var(--subtext);cursor:pointer;" onclick="showToast('🔗 Proportions locked')">🔗</div>
+        <div style="flex:1;">
+          <div style="font-size:11px;color:var(--subtext);margin-bottom:5px;">Height (px)</div>
+          <input class="nm-input" type="number" value="720" id="canvasH" style="padding:10px 14px;font-size:15px;font-weight:700;">
+        </div>
+      </div>
+
+      <div class="canvas-preset active" onclick="setPreset('YouTube',1280,720,this)">
+        <div class="preset-icon">▶️</div>
+        <div>
+          <div class="preset-name">YouTube</div>
+          <div class="preset-size">1280 × 720 px · 16:9</div>
+        </div>
+      </div>
+      <div class="canvas-preset" onclick="setPreset('TikTok',1080,1920,this)">
+        <div class="preset-icon">🎵</div>
+        <div>
+          <div class="preset-name">TikTok</div>
+          <div class="preset-size">1080 × 1920 px · 9:16</div>
+        </div>
+      </div>
+      <div class="canvas-preset" onclick="setPreset('Instagram',1080,1080,this)">
+        <div class="preset-icon">📷</div>
+        <div>
+          <div class="preset-name">Instagram (1×1)</div>
+          <div class="preset-size">1080 × 1080 px · Square</div>
+        </div>
+      </div>
+      <div class="canvas-preset" onclick="setPreset('4K',3840,2160,this)">
+        <div class="preset-icon">🎬</div>
+        <div>
+          <div class="preset-name">4K</div>
+          <div class="preset-size">3840 × 2160 px · 16:9</div>
+        </div>
+      </div>
+      <div class="canvas-preset" onclick="setPreset('Custom',0,0,this)">
+        <div class="preset-icon">✏️</div>
+        <div>
+          <div class="preset-name">Custom</div>
+          <div class="preset-size">Enter any dimensions above</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FPS -->
+    <div class="panel-section">
+      <div class="section-label">Frame Rate</div>
+      <div class="panel-grid-3">
+        <div class="panel-card" onclick="setFPS(8,this)">
+          <div class="panel-card-icon">🐢</div>
+          <div class="panel-card-name">8 FPS</div>
+          <div class="panel-card-sub">Choppy</div>
+        </div>
+        <div class="panel-card active-card" onclick="setFPS(12,this)">
+          <div class="panel-card-icon">🎞</div>
+          <div class="panel-card-name">12 FPS</div>
+          <div class="panel-card-sub">Classic</div>
+        </div>
+        <div class="panel-card" onclick="setFPS(24,this)">
+          <div class="panel-card-icon">🎬</div>
+          <div class="panel-card-name">24 FPS</div>
+          <div class="panel-card-sub">Smooth</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Brushes -->
+    <div class="panel-section">
+      <div class="section-label">Brush Style</div>
+      <div class="brush-item active" onclick="selectBrush('pen',this)">
+        <div class="brush-preview" style="height:2px;background:#1a1535;"></div>
+        <div class="brush-name">Pen</div>
+      </div>
+      <div class="brush-item" onclick="selectBrush('pencil',this)">
+        <div class="brush-preview" style="height:3px;background:linear-gradient(to right,#888,#aaa,#888);opacity:0.6;"></div>
+        <div class="brush-name">Pencil</div>
+      </div>
+      <div class="brush-item" onclick="selectBrush('marker',this)">
+        <div class="brush-preview" style="height:8px;background:rgba(255,51,133,0.4);border-radius:4px;"></div>
+        <div class="brush-name">Highlighter</div>
+      </div>
+      <div class="brush-item" onclick="selectBrush('glow',this)">
+        <div class="brush-preview" style="height:5px;background:linear-gradient(to right,#FF3385,#33A1FF);box-shadow:0 0 8px rgba(255,51,133,0.5);border-radius:4px;"></div>
+        <div class="brush-name">Glow Brush</div>
+        <span class="badge-pro">PLUS</span>
+      </div>
+      <div class="brush-item" onclick="selectBrush('ink',this)">
+        <div class="brush-preview" style="height:4px;background:linear-gradient(to right,#1a1535 0%,#1a1535 40%,transparent 70%,#1a1535 100%);"></div>
+        <div class="brush-name">Ink Pen</div>
+      </div>
+    </div>
+
+    <!-- Onion Skinning Options -->
+    <div class="panel-section">
+      <div class="section-label">Onion Skinning</div>
+      <div class="panel-grid-2">
+        <div class="panel-card" onclick="setOnionFrames(1,this)">
+          <div class="panel-card-icon">1️⃣</div>
+          <div class="panel-card-name">1 Frame</div>
+          <div class="panel-card-sub">Before only</div>
+        </div>
+        <div class="panel-card active-card" onclick="setOnionFrames(2,this)">
+          <div class="panel-card-icon">2️⃣</div>
+          <div class="panel-card-name">2 Frames</div>
+          <div class="panel-card-sub">Before & after</div>
+        </div>
+      </div>
+      <div style="margin-top:10px;">
+        <div style="font-size:11px;color:var(--subtext);margin-bottom:6px;">Ghost Opacity</div>
+        <input type="range" class="size-slider" min="10" max="60" value="25" style="width:100%;" oninput="showToast('Ghost opacity: '+this.value+'%')">
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     OVERLAY: LAYERS
+══════════════════════════════════════ -->
+<div class="overlay" id="layers-overlay">
+  <div class="overlay-backdrop" onclick="closePanel('layers-overlay')"></div>
+  <div class="panel work-panel">
+    <div class="panel-handle"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <div class="panel-title" style="margin:0;">▤ Layers</div>
+      <button class="btn-primary" style="padding:8px 16px;font-size:13px;width:auto;" onclick="addLayer()">+ Add Layer</button>
+    </div>
+    <div id="layerList">
+      <div class="layer-item" style="border-color:var(--accent1);">
+        <div class="layer-thumb" style="background:linear-gradient(135deg,rgba(255,51,133,0.15),transparent);"></div>
+        <div class="layer-name">Layer 3 – Foreground</div>
+        <div class="layer-opacity">100%</div>
+        <span style="font-size:14px;">👁</span>
+      </div>
+      <div class="layer-item">
+        <div class="layer-thumb" style="background:linear-gradient(135deg,rgba(51,161,255,0.15),transparent);"></div>
+        <div class="layer-name">Layer 2 – Character</div>
+        <div class="layer-opacity">100%</div>
+        <span style="font-size:14px;">👁</span>
+      </div>
+      <div class="layer-item">
+        <div class="layer-thumb" style="background:linear-gradient(135deg,rgba(46,204,113,0.15),transparent);"></div>
+        <div class="layer-name">Layer 1 – Background</div>
+        <div class="layer-opacity">80%</div>
+        <span style="font-size:14px;">👁</span>
+      </div>
+    </div>
+    <div style="margin-top:12px;padding:12px;background:rgba(255,51,133,0.08);border-radius:14px;border:1px solid rgba(255,51,133,0.2);">
+      <div style="font-size:12px;color:var(--subtext);">🔓 Free plan: <strong>3 layers max</strong>. Upgrade to Plus for up to 10 layers.</div>
+    </div>
+    <div style="margin-top:10px;">
+      <div class="section-label">Layer Opacity</div>
+      <input type="range" class="size-slider" min="0" max="100" value="100" style="width:100%;" oninput="showToast('Layer opacity: '+this.value+'%')">
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     OVERLAY: AUDIO
+══════════════════════════════════════ -->
+<div class="overlay" id="audio-overlay">
+  <div class="overlay-backdrop" onclick="closePanel('audio-overlay')"></div>
+  <div class="panel work-panel">
+    <div class="panel-handle"></div>
+    <div class="panel-title">🔊 Audio & Sound</div>
+
+    <div class="panel-section">
+      <div class="section-label">Actions</div>
+      <div class="panel-grid-2">
+        <div class="panel-card" onclick="doAction('record')">
+          <div class="panel-card-icon">🎙</div>
+          <div class="panel-card-name">Voice Record</div>
+          <div class="panel-card-sub">Record dialogue</div>
+        </div>
+        <div class="panel-card" onclick="doAction('import-audio')">
+          <div class="panel-card-icon">🎵</div>
+          <div class="panel-card-name">Import Audio</div>
+          <div class="panel-card-sub">From library</div>
+        </div>
+        <div class="panel-card" onclick="doAction('sfx')">
+          <div class="panel-card-icon">✨</div>
+          <div class="panel-card-name">Sound FX</div>
+          <div class="panel-card-sub">Curated library</div>
+        </div>
+        <div class="panel-card" onclick="doAction('lipsync')">
+          <div class="panel-card-icon">👄</div>
+          <div class="panel-card-name">Lip Sync</div>
+          <div class="panel-card-sub">Match to audio</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="section-label">Audio Track</div>
+      <div class="waveform" id="waveform"></div>
+      <div style="display:flex;justify-content:space-between;margin-top:6px;">
+        <span style="font-size:11px;color:var(--subtext);">0:00</span>
+        <span style="font-size:11px;color:var(--subtext);">0:24</span>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="section-label">Volume</div>
+      <input type="range" class="size-slider" min="0" max="100" value="80" style="width:100%;" oninput="showToast('Volume: '+this.value+'%')">
+    </div>
+
+    <div style="padding:12px;background:rgba(51,161,255,0.08);border-radius:14px;border:1px solid rgba(51,161,255,0.2);">
+      <div style="font-size:12px;color:var(--subtext);">⭐ Unlimited audio imports and full sound FX library with <strong>Plus</strong>.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     OVERLAY: EXPORT (inside more)
+══════════════════════════════════════ -->
+<div class="overlay" id="export-overlay">
+  <div class="overlay-backdrop" onclick="closePanel('export-overlay')"></div>
+  <div class="panel work-panel">
+    <div class="panel-handle"></div>
+    <div class="panel-title">📤 Export & Share</div>
+
+    <div class="panel-section">
+      <div class="section-label">Format</div>
+      <div class="panel-grid-3">
+        <div class="panel-card active-card" onclick="selectExport('MP4',this)">
+          <div class="panel-card-icon">🎬</div>
+          <div class="panel-card-name">MP4</div>
+          <div class="panel-card-sub">Video</div>
+        </div>
+        <div class="panel-card" onclick="selectExport('GIF',this)">
+          <div class="panel-card-icon">🖼</div>
+          <div class="panel-card-name">GIF</div>
+          <div class="panel-card-sub">Animated</div>
+        </div>
+        <div class="panel-card" onclick="selectExport('PNG',this)">
+          <div class="panel-card-icon">🖼</div>
+          <div class="panel-card-name">PNG</div>
+          <div class="panel-card-sub">Transparent</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="section-label">Share To</div>
+      <div class="panel-grid-3">
+        <div class="panel-card" onclick="doAction('share-tiktok')">
+          <div class="panel-card-icon">🎵</div>
+          <div class="panel-card-name">TikTok</div>
+        </div>
+        <div class="panel-card" onclick="doAction('share-youtube')">
+          <div class="panel-card-icon">▶️</div>
+          <div class="panel-card-name">YouTube</div>
+        </div>
+        <div class="panel-card" onclick="doAction('share-instagram')">
+          <div class="panel-card-icon">📷</div>
+          <div class="panel-card-name">Instagram</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="padding:12px;background:rgba(255,51,133,0.08);border-radius:14px;border:1px solid rgba(255,51,133,0.2);margin-bottom:16px;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:16px;">💧</span>
+        <div style="font-size:12px;color:var(--subtext);">Free plan exports include a watermark. <strong>Remove with Plus.</strong></div>
+      </div>
+    </div>
+
+    <button class="btn-primary" onclick="doAction('export-now')">Export Now</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── STATE ───
+let currentTool = 'pen';
+let currentColor = '#1a1535';
+let brushSize = 4;
+let isDrawing = false;
+let frames = [];
+let currentFrame = 0;
+let onionEnabled = false;
+let isPlaying = false;
+let playInterval = null;
+let fps = 12;
+let layerCount = 3;
+let ctx, canvas, onionCtx, onionCanvas;
+let lastX, lastY;
+let selectMode = false;
+
+// ─── INIT ───
+function initCanvas() {
+  canvas = document.getElementById('drawCanvas');
+  onionCanvas = document.getElementById('onionCanvas');
+  const container = document.getElementById('canvas-container');
+  canvas.width = container.offsetWidth;
+  canvas.height = container.offsetHeight;
+  onionCanvas.width = canvas.width;
+  onionCanvas.height = canvas.height;
+  ctx = canvas.getContext('2d');
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  // Create initial frames
+  for (let i = 0; i < 4; i++) addFrameData();
+  currentFrame = 0;
+  renderFrameStrip();
+  loadFrame(0);
+
+  // Generate waveform
+  generateWaveform();
+
+  // Events
+  canvas.addEventListener('mousedown', startDraw);
+  canvas.addEventListener('mousemove', draw);
+  canvas.addEventListener('mouseup', endDraw);
+  canvas.addEventListener('touchstart', e => { e.preventDefault(); startDraw(e.touches[0]); }, {passive:false});
+  canvas.addEventListener('touchmove', e => { e.preventDefault(); draw(e.touches[0]); }, {passive:false});
+  canvas.addEventListener('touchend', e => { e.preventDefault(); endDraw(); }, {passive:false});
+}
+
+function getCanvasPos(e) {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  return {
+    x: (e.clientX - rect.left) * scaleX,
+    y: (e.clientY - rect.top) * scaleY
+  };
+}
+
+function startDraw(e) {
+  if (currentTool === 'fill') { smartFill(e); return; }
+  if (currentTool === 'lasso') { return; }
+  isDrawing = true;
+  const pos = getCanvasPos(e);
+  lastX = pos.x; lastY = pos.y;
+  ctx.beginPath();
+  ctx.moveTo(lastX, lastY);
+  applyToolStyle();
+  ctx.arc(lastX, lastY, ctx.lineWidth/2, 0, Math.PI*2);
+  ctx.fill();
+}
+
+function draw(e) {
+  if (!isDrawing) return;
+  const pos = getCanvasPos(e);
+  applyToolStyle();
+  ctx.beginPath();
+  ctx.moveTo(lastX, lastY);
+  ctx.lineTo(pos.x, pos.y);
+  ctx.stroke();
+  lastX = pos.x; lastY = pos.y;
+}
+
+function endDraw() {
+  if (!isDrawing) return;
+  isDrawing = false;
+  saveFrame(currentFrame);
+}
+
+function applyToolStyle() {
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.globalAlpha = 1;
+  ctx.strokeStyle = currentColor;
+  ctx.fillStyle = currentColor;
+
+  if (currentTool === 'pen') {
+    ctx.lineWidth = brushSize;
+    ctx.globalAlpha = 1;
+  } else if (currentTool === 'pencil') {
+    ctx.lineWidth = brushSize * 0.8;
+    ctx.globalAlpha = 0.65;
+  } else if (currentTool === 'brush') {
+    ctx.lineWidth = brushSize * 3;
+    ctx.globalAlpha = 0.7;
+  } else if (currentTool === 'eraser') {
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.lineWidth = brushSize * 4;
+    ctx.globalAlpha = 1;
+  } else if (currentTool === 'marker') {
+    ctx.lineWidth = brushSize * 5;
+    ctx.globalAlpha = 0.35;
+  }
+}
+
+function smartFill(e) {
+  const pos = getCanvasPos(e);
+  // Simple bucket fill simulation
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = currentColor;
+  ctx.beginPath();
+  ctx.arc(pos.x, pos.y, brushSize * 8, 0, Math.PI*2);
+  ctx.fill();
+  saveFrame(currentFrame);
+  showToast('🪣 Smart Fill applied');
+}
+
+// ─── FRAMES ───
+function addFrameData() {
+  const offCanvas = document.createElement('canvas');
+  offCanvas.width = 400; offCanvas.height = 225;
+  frames.push(offCanvas);
+}
+
+function saveFrame(idx) {
+  if (!frames[idx]) return;
+  const offCtx = frames[idx].getContext('2d');
+  offCtx.clearRect(0, 0, frames[idx].width, frames[idx].height);
+  offCtx.drawImage(canvas, 0, 0, frames[idx].width, frames[idx].height);
+  renderFrameStrip();
+}
+
+function loadFrame(idx) {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  if (frames[idx]) {
+    ctx.drawImage(frames[idx], 0, 0, canvas.width, canvas.height);
+  }
+  if (onionEnabled) drawOnion(idx);
+}
+
+function drawOnion(idx) {
+  onionCtx = onionCanvas.getContext('2d');
+  onionCtx.clearRect(0, 0, onionCanvas.width, onionCanvas.height);
+  if (idx > 0 && frames[idx-1]) {
+    onionCtx.globalAlpha = 0.25;
+    onionCtx.globalCompositeOperation = 'source-over';
+    onionCtx.filter = 'hue-rotate(120deg)';
+    onionCtx.drawImage(frames[idx-1], 0, 0, onionCanvas.width, onionCanvas.height);
+    onionCtx.filter = 'none';
+  }
+  if (idx < frames.length-1 && frames[idx+1]) {
+    onionCtx.globalAlpha = 0.18;
+    onionCtx.filter = 'hue-rotate(240deg)';
+    onionCtx.drawImage(frames[idx+1], 0, 0, onionCanvas.width, onionCanvas.height);
+    onionCtx.filter = 'none';
+  }
+  onionCtx.globalAlpha = 1;
+}
+
+function renderFrameStrip() {
+  const strip = document.getElementById('frameStrip');
+  strip.innerHTML = '';
+  frames.forEach((f, i) => {
+    const thumb = document.createElement('div');
+    thumb.className = 'frame-thumb' + (i === currentFrame ? ' active' : '');
+    thumb.innerHTML = `<canvas></canvas><div class="frame-num">${i+1}</div>`;
+    const tc = thumb.querySelector('canvas');
+    tc.width = 56; tc.height = 38;
+    const tctx = tc.getContext('2d');
+    tctx.drawImage(f, 0, 0, 56, 38);
+    thumb.onclick = () => switchFrame(i);
+    strip.appendChild(thumb);
+  });
+  // Add frame button
+  const addBtn = document.createElement('div');
+  addBtn.className = 'add-frame-btn';
+  addBtn.textContent = '+';
+  addBtn.onclick = addFrame;
+  strip.appendChild(addBtn);
+}
+
+function switchFrame(idx) {
+  saveFrame(currentFrame);
+  currentFrame = idx;
+  loadFrame(currentFrame);
+  renderFrameStrip();
+}
+
+function addFrame() {
+  saveFrame(currentFrame);
+  addFrameData();
+  currentFrame = frames.length - 1;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  renderFrameStrip();
+  showToast(`Frame ${currentFrame+1} added`);
+}
+
+function duplicateFrame() {
+  saveFrame(currentFrame);
+  const src = frames[currentFrame];
+  const newF = document.createElement('canvas');
+  newF.width = src.width; newF.height = src.height;
+  newF.getContext('2d').drawImage(src, 0, 0);
+  frames.splice(currentFrame+1, 0, newF);
+  currentFrame++;
+  loadFrame(currentFrame);
+  renderFrameStrip();
+  showToast(`Frame ${currentFrame+1} duplicated`);
+}
+
+function deleteFrame() {
+  if (frames.length <= 1) { showToast('⚠ Need at least 1 frame'); return; }
+  frames.splice(currentFrame, 1);
+  if (currentFrame >= frames.length) currentFrame = frames.length-1;
+  loadFrame(currentFrame);
+  renderFrameStrip();
+  showToast('Frame deleted');
+}
+
+// ─── PLAYBACK ───
+function togglePlay() {
+  isPlaying = !isPlaying;
+  const btn = document.getElementById('playPauseBtn');
+  if (isPlaying) {
+    btn.textContent = '⏸';
+    let f = currentFrame;
+    playInterval = setInterval(() => {
+      saveFrame(f);
+      f = (f+1) % frames.length;
+      currentFrame = f;
+      loadFrame(f);
+      document.querySelectorAll('.frame-thumb').forEach((t,i) => {
+        t.classList.toggle('active', i === f);
+      });
+    }, 1000/fps);
+  } else {
+    btn.textContent = '▶';
+    clearInterval(playInterval);
+    renderFrameStrip();
+  }
+}
+
+// ─── TOOL SELECTION ───
+function selectTool(tool, label) {
+  currentTool = tool;
+  document.querySelectorAll('.tool-btn[id^="tool-"]').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById('tool-'+tool);
+  if (btn) btn.classList.add('active');
+
+  const lbl = document.getElementById('toolLabel');
+  lbl.textContent = label;
+  lbl.classList.add('show');
+  setTimeout(() => lbl.classList.remove('show'), 1800);
+}
+
+// ─── COLOR ───
+function selectColor(color, el) {
+  currentColor = color;
+  document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
+  if (el) el.classList.add('active');
+}
+
+// ─── BRUSH ───
+function updateBrushSize(v) { brushSize = parseInt(v); }
+
+// ─── TOGGLES ───
+function toggleOnion(el) {
+  el.classList.toggle('on');
+  onionEnabled = el.classList.contains('on');
+  const oc = document.getElementById('onionCanvas');
+  if (onionEnabled) {
+    oc.classList.add('visible');
+    drawOnion(currentFrame);
+    showToast('👻 Onion Skinning ON');
+  } else {
+    oc.classList.remove('visible');
+    onionCtx = oc.getContext('2d');
+    onionCtx.clearRect(0,0,oc.width,oc.height);
+    showToast('👻 Onion Skinning OFF');
+  }
+}
+
+function toggleFeature(el, name) {
+  el.classList.toggle('on');
+  showToast(name + (el.classList.contains('on') ? ' ON' : ' OFF'));
+}
+
+// ─── PANELS ───
+function openPanel(id) { document.getElementById(id).classList.add('open'); }
+function closePanel(id) { document.getElementById(id).classList.remove('open'); }
+
+// ─── CANVAS PRESETS ───
+function setPreset(name, w, h, el) {
+  document.querySelectorAll('.canvas-preset').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  if (w && h) {
+    document.getElementById('canvasW').value = w;
+    document.getElementById('canvasH').value = h;
+  }
+  document.getElementById('fps-tag').textContent = name;
+  showToast(`Canvas: ${name} ${w ? w+'×'+h : 'Custom'}`);
+}
+
+function setFPS(f, el) {
+  fps = f;
+  document.querySelectorAll('#work-overlay .panel-grid-3 .panel-card').forEach(c => c.classList.remove('active-card'));
+  el.classList.add('active-card');
+  document.getElementById('fps-tag').textContent = f+' FPS';
+  showToast(`Frame rate: ${f} FPS`);
+}
+
+function selectBrush(b, el) {
+  document.querySelectorAll('.brush-item').forEach(i => i.classList.remove('active'));
+  el.classList.add('active');
+  showToast('Brush: '+el.querySelector('.brush-name').textContent);
+}
+
+function setOnionFrames(n, el) {
+  document.querySelectorAll('#work-overlay .panel-grid-2 .panel-card').forEach(c => c.classList.remove('active-card'));
+  el.classList.add('active-card');
+  showToast(`Onion: ${n} frame(s)`);
+}
+
+// ─── SELECT MODE ───
+function doAction(action) {
+  closePanel('more-overlay');
+  closePanel('export-overlay');
+
+  if (action === 'select-copy') {
+    selectMode = true;
+    document.getElementById('selectBanner').classList.add('show');
+    selectTool('lasso','⬚ Select Mode');
+    return;
+  }
+
+  const messages = {
+    'share': '📤 Share sheet opened',
+    'export': '⬇️ Preparing export…',
+    'paste': '📋 Paste from clipboard',
+    'rotoscope': '🎞 Import video/photo',
+    'record': '🎙 Voice recording started',
+    'import-audio': '🎵 Audio library opened',
+    'sfx': '✨ Sound FX library',
+    'lipsync': '👄 Lip Sync mode activated',
+    'gestures': openGestureGuide.toString(),
+    'share-tiktok': '🎵 Uploading to TikTok…',
+    'share-youtube': '▶️ Uploading to YouTube…',
+    'share-instagram': '📷 Uploading to Instagram…',
+    'export-now': '⬇️ Exporting animation…',
+  };
+
+  if (action === 'gestures') { openGestureGuide(); return; }
+  showToast(messages[action] || action);
+}
+
+function openGestureGuide() {
+  showToast('🤌 Gestures: 2-finger tap=Undo · 3-finger=Redo · Pinch=Zoom');
+}
+
+function exitSelect() {
+  selectMode = false;
+  document.getElementById('selectBanner').classList.remove('show');
+  selectTool('pen','✏️ Pen');
+}
+
+function openExportPanel() {
+  closePanel('more-overlay');
+  setTimeout(() => openPanel('export-overlay'), 100);
+}
+
+function selectExport(fmt, el) {
+  document.querySelectorAll('#export-overlay .panel-grid-3 .panel-card').forEach(c => c.classList.remove('active-card'));
+  el.classList.add('active-card');
+  showToast('Format: '+fmt);
+}
+
+// ─── LAYERS ───
+function addLayer() {
+  if (layerCount >= 3) {
+    showToast('⭐ Upgrade to Plus for more layers');
+    return;
+  }
+  layerCount++;
+  showToast(`Layer ${layerCount} added`);
+}
+
+// ─── WAVEFORM ───
+function generateWaveform() {
+  const wf = document.getElementById('waveform');
+  wf.innerHTML = '';
+  for (let i = 0; i < 60; i++) {
+    const bar = document.createElement('div');
+    bar.className = 'wave-bar';
+    bar.style.height = (Math.random() * 28 + 4) + 'px';
+    wf.appendChild(bar);
+  }
+}
+
+// ─── TOAST ───
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._to);
+  t._to = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ─── NAVIGATION ───
+function goToEditor() {
+  document.getElementById('splash').classList.remove('active');
+  document.getElementById('editor').classList.add('active');
+  setTimeout(initCanvas, 100);
+}
+
+function goToSplash() {
+  document.getElementById('editor').classList.remove('active');
+  document.getElementById('splash').classList.add('active');
+}
+
+// ─── GESTURE HINTS (simulated) ───
+document.addEventListener('keydown', e => {
+  if (!document.getElementById('editor').classList.contains('active')) return;
+  if ((e.ctrlKey || e.metaKey) && e.key === 'z') { showToast('↩ Undo'); }
+  if ((e.ctrlKey || e.metaKey) && e.key === 'y') { showToast('↪ Redo'); }
+  if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); showToast('💾 Project saved'); }
+});
+
+// Simulate touch gestures on mouse
+let touchCount = 0;
+document.getElementById('editor') && document.addEventListener('contextmenu', e => {
+  e.preventDefault();
+  showToast('👆 3-Finger Tap → Redo');
+});
+
+</script>
+</body>
+</html>

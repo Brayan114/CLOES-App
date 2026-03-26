@@ -33,223 +33,60 @@ import com.cloes.app.ui.components.*
 import com.cloes.app.ui.theme.*
 import com.cloes.app.viewmodel.AppViewModel
 import kotlinx.coroutines.delay
+import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.launch
 
 // ══════════════════════════════════════════════════════════════════════════════
-//  MUSE DRAW SCREEN  (Feature 1)
+//  MUSE SELL WITH INTRO POPUP
 // ══════════════════════════════════════════════════════════════════════════════
 @Composable
-fun MuseDrawScreen(vm: AppViewModel) {
-    val c = vm.themeColors
-    var selectedTool by remember { mutableStateOf("pen") }
-    var selectedColor by remember { mutableStateOf(Pink) }
-    var strokeWidth by remember { mutableStateOf(6f) }
-    var showColorPicker by remember { mutableStateOf(false) }
-    var canvasCleared by remember { mutableStateOf(false) }
-    val paths = remember { mutableStateListOf<DrawnPath>() }
-    val redoStack = remember { mutableStateListOf<DrawnPath>() }
-    var currentPath by remember { mutableStateOf<DrawnPath?>(null) }
-    val scope = rememberCoroutineScope()
+fun MuseSellWithIntro(vm: AppViewModel) {
+    var showSeller by remember { mutableStateOf(false) }
 
-    val tools = listOf(
-        "pen" to Icons.Default.Edit,
-        "marker" to Icons.Default.BorderColor,
-        "eraser" to Icons.Default.AutoFixNormal,
-        "fill" to Icons.Default.FormatColorFill,
-        "shape" to Icons.Default.Category,
-        "text" to Icons.Default.TextFields
-    )
-    val palette = listOf(
-        Pink, Purple, Cyan, Color(0xFFF59E0B), Color(0xFF22C55E),
-        Color(0xFFEF4444), Color.White, Color.Black,
-        Color(0xFF06B6D4), Color(0xFFFF6B35), Color(0xFF8B5CF6), Color(0xFF10B981)
-    )
-
-    Box(modifier = Modifier.fillMaxSize().background(c.bg)) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            // ── Top Bar ──────────────────────────────────────────────────
-            Row(
-                modifier = Modifier.fillMaxWidth().background(c.surface2)
-                    .statusBarsPadding()
-                    .padding(horizontal = 12.dp, vertical = 10.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+    if (!showSeller) {
+        // Full-screen tap-to-dismiss intro
+        Box(
+            modifier = Modifier.fillMaxSize().background(Color.Black.copy(0.75f))
+                .clickable { showSeller = true },
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(18.dp),
+                modifier = Modifier.padding(40.dp)
             ) {
-                NeuIconButton(
-                    icon = { Icon(Icons.Default.ArrowBack, null, tint = c.textMid, modifier = Modifier.size(18.dp)) },
-                    onClick = { vm.showMuseDraw = false }
+                Text("💸", fontSize = 64.sp)
+                Text(
+                    "Sell Anything",
+                    color = Color.White,
+                    fontSize = 32.sp,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    style = androidx.compose.ui.text.TextStyle(
+                        brush = Brush.linearGradient(listOf(Pink, Purple, Cyan))
+                    )
                 )
                 Text(
-                    "Muse Draw",
-                    style = androidx.compose.ui.text.TextStyle(
-                        brush = Brush.linearGradient(listOf(Pink, Purple)),
-                        fontSize = 18.sp, fontWeight = FontWeight.Bold
-                    ),
-                    modifier = Modifier.weight(1f)
+                    "Clothes, Electronics, Art\nand so much more",
+                    color = Color.White.copy(0.85f),
+                    fontSize = 18.sp,
+                    textAlign = TextAlign.Center,
+                    lineHeight = 28.sp
                 )
-                // Undo
-                NeuIconButton(
-                    icon = { Icon(Icons.Default.Undo, null, tint = if (paths.isNotEmpty()) Purple else c.textSub, modifier = Modifier.size(18.dp)) },
-                    onClick = { if (paths.isNotEmpty()) { redoStack.add(paths.removeLast()) } }
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    "Tap anywhere to continue",
+                    color = Color.White.copy(0.45f),
+                    fontSize = 13.sp,
+                    letterSpacing = 0.5.sp
                 )
-                // Redo
-                NeuIconButton(
-                    icon = { Icon(Icons.Default.Redo, null, tint = if (redoStack.isNotEmpty()) Purple else c.textSub, modifier = Modifier.size(18.dp)) },
-                    onClick = { if (redoStack.isNotEmpty()) { paths.add(redoStack.removeLast()) } }
-                )
-                // Clear
-                NeuIconButton(
-                    icon = { Icon(Icons.Default.DeleteSweep, null, tint = Color(0xFFEF4444), modifier = Modifier.size(18.dp)) },
-                    onClick = { paths.clear(); redoStack.clear() }
-                )
-                // Save
-                NeuIconButton(
-                    icon = { Icon(Icons.Default.Save, null, tint = Color(0xFF22C55E), modifier = Modifier.size(18.dp)) },
-                    onClick = {
-                        vm.earnCoins(2, "Muse Draw saved")
-                        vm.showToast("Muse Draw", "Drawing saved! +2 coins ✦", "low")
-                    }
-                )
-            }
-
-            // ── Tool Bar ─────────────────────────────────────────────────
-            Row(
-                modifier = Modifier.fillMaxWidth().background(c.surface)
-                    .padding(horizontal = 8.dp, vertical = 6.dp),
-                horizontalArrangement = Arrangement.SpaceAround,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                tools.forEach { (tool, icon) ->
-                    Box(
-                        modifier = Modifier
-                            .size(40.dp)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(if (selectedTool == tool) Purple.copy(0.2f) else Color.Transparent)
-                            .clickable { selectedTool = tool },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(icon, null,
-                            tint = if (selectedTool == tool) Purple else c.textSub,
-                            modifier = Modifier.size(20.dp))
-                    }
-                }
-                // Color swatch
-                Box(
-                    modifier = Modifier
-                        .size(28.dp)
-                        .clip(CircleShape)
-                        .background(selectedColor)
-                        .border(2.dp, if (showColorPicker) Purple else c.border, CircleShape)
-                        .clickable { showColorPicker = !showColorPicker }
-                )
-            }
-
-            // ── Stroke Slider ─────────────────────────────────────────────
-            Row(
-                modifier = Modifier.fillMaxWidth().background(c.surface2)
-                    .padding(horizontal = 16.dp, vertical = 4.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Icon(Icons.Default.LineWeight, null, tint = c.textSub, modifier = Modifier.size(16.dp))
-                Slider(
-                    value = strokeWidth,
-                    onValueChange = { strokeWidth = it },
-                    valueRange = 2f..30f,
-                    modifier = Modifier.weight(1f),
-                    colors = SliderDefaults.colors(thumbColor = Purple, activeTrackColor = Purple)
-                )
-                Text("${strokeWidth.toInt()}px", color = c.textSub, fontSize = 11.sp)
-            }
-
-            // ── Canvas ────────────────────────────────────────────────────
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .background(Color.White)
-                    .pointerInput(selectedTool, selectedColor, strokeWidth) {
-                        detectDragGestures(
-                            onDragStart = { offset ->
-                                currentPath = DrawnPath(
-                                    color = if (selectedTool == "eraser") Color.White else selectedColor,
-                                    strokeWidth = if (selectedTool == "eraser") strokeWidth * 3 else strokeWidth,
-                                    points = mutableListOf(offset)
-                                )
-                            },
-                            onDrag = { _, drag ->
-                                currentPath?.points?.add(
-                                    (currentPath!!.points.last() + drag)
-                                )
-                                currentPath = currentPath?.copy()
-                            },
-                            onDragEnd = {
-                                currentPath?.let { paths.add(it); redoStack.clear() }
-                                currentPath = null
-                            }
-                        )
-                    }
-            ) {
-                androidx.compose.foundation.Canvas(modifier = Modifier.fillMaxSize()) {
-                    (paths + listOfNotNull(currentPath)).forEach { dp ->
-                        if (dp.points.size > 1) {
-                            val path = Path()
-                            path.moveTo(dp.points[0].x, dp.points[0].y)
-                            dp.points.drop(1).forEach { pt -> path.lineTo(pt.x, pt.y) }
-                            drawPath(
-                                path = path,
-                                color = dp.color,
-                                style = androidx.compose.ui.graphics.drawscope.Stroke(
-                                    width = dp.strokeWidth,
-                                    cap = StrokeCap.Round,
-                                    join = StrokeJoin.Round
-                                )
-                            )
-                        }
-                    }
-                }
-                if (paths.isEmpty() && currentPath == null) {
-                    Text(
-                        "✦ Tap and drag to draw",
-                        color = Color.LightGray,
-                        fontSize = 14.sp,
-                        modifier = Modifier.align(Alignment.Center)
-                    )
-                }
-            }
-
-            // ── Color Picker Row ─────────────────────────────────────────
-            AnimatedVisibility(visible = showColorPicker) {
-                LazyRow(
-                    modifier = Modifier.fillMaxWidth().background(c.surface2).padding(10.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(palette) { col ->
-                        Box(
-                            modifier = Modifier
-                                .size(32.dp)
-                                .clip(CircleShape)
-                                .background(col)
-                                .border(if (selectedColor == col) 3.dp else 1.dp,
-                                    if (selectedColor == col) Purple else c.border, CircleShape)
-                                .clickable { selectedColor = col; showColorPicker = false }
-                        )
-                    }
-                }
             }
         }
+    } else {
+        CloesSellerScreen(vm)
     }
 }
 
-data class DrawnPath(
-    val color: Color,
-    val strokeWidth: Float,
-    val points: MutableList<androidx.compose.ui.geometry.Offset>
-)
-
-// ══════════════════════════════════════════════════════════════════════════════
-//  MUSE CLOTHING SCREEN  (Feature 2) — choice picker
-// ══════════════════════════════════════════════════════════════════════════════
 @Composable
 fun MuseClothingScreen(vm: AppViewModel) {
     val c = vm.themeColors
@@ -312,7 +149,7 @@ fun MuseClothingScreen(vm: AppViewModel) {
     }
     when (vm.museClothingMode) {
         "buy"   -> CloesBuyScreen(vm)
-        "sell"  -> CloesSellerScreen(vm)
+        "sell"  -> MuseSellWithIntro(vm)
         "dress" -> MuseDressScreen(vm)
     }
 }
@@ -559,7 +396,8 @@ fun SubscriptionScreen(vm: AppViewModel, onClose: () -> Unit) {
 @Composable
 fun MuseDressScreen(vm: AppViewModel) {
     val c = vm.themeColors
-    var showWelcome by remember { mutableStateOf(!vm.museDressWelcomeSeen) }
+    // Always show welcome the first time user enters; info icon re-shows it later
+    var showWelcome by remember { mutableStateOf(true) }
     var showSubscription by remember { mutableStateOf(false) }
     var input by remember { mutableStateOf("") }
     val scope = rememberCoroutineScope()
@@ -571,7 +409,7 @@ fun MuseDressScreen(vm: AppViewModel) {
         SubscriptionScreen(vm, onClose = { showSubscription = false }); return
     }
 
-    Box(modifier = Modifier.fillMaxSize().background(c.bg)) {
+    Box(modifier = Modifier.fillMaxSize().background(c.bg).imePadding()) {
         AuroraBackground(theme = vm.appTheme, modifier = Modifier.fillMaxSize())
         Column(modifier = Modifier.fillMaxSize()) {
             // Top bar
@@ -617,21 +455,64 @@ fun MuseDressScreen(vm: AppViewModel) {
                 // Show generated outfit images
                 items(vm.museDressMessages.reversed()) { msg ->
                     if (msg.type == MsgType.Image) {
+                        // Outfit card — styled gradient preview
+                        val outfitIndex = vm.museDressMessages.indexOf(msg)
+                        val palettes = listOf(
+                            listOf(Purple, Pink), listOf(Pink, Color(0xFFFF8C00)),
+                            listOf(Color(0xFF06B6D4), Purple), listOf(Color(0xFF22C55E), Color(0xFF06B6D4)),
+                            listOf(Color(0xFFF59E0B), Pink), listOf(Purple, Color(0xFF06B6D4))
+                        )
+                        val pal = palettes[outfitIndex % palettes.size]
                         Column(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalAlignment = Alignment.Start
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .size(200.dp)
-                                    .clip(RoundedCornerShape(16.dp))
-                                    .background(Brush.linearGradient(listOf(Purple.copy(0.3f), Pink.copy(0.3f)))),
+                                    .width(220.dp)
+                                    .height(260.dp)
+                                    .clip(RoundedCornerShape(20.dp))
+                                    .background(Brush.linearGradient(listOf(pal[0].copy(0.35f), pal[1].copy(0.25f)))),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Icon(Icons.Default.Checkroom, null, tint = Purple, modifier = Modifier.size(48.dp))
-                                    Text(msg.text, color = c.text, fontSize = 11.sp, textAlign = TextAlign.Center,
-                                        modifier = Modifier.padding(8.dp))
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    // Large outfit hanger icon
+                                    Box(
+                                        modifier = Modifier.size(90.dp)
+                                            .clip(RoundedCornerShape(24.dp))
+                                            .background(Brush.radialGradient(listOf(pal[0].copy(0.4f), pal[1].copy(0.2f)))),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(Icons.Default.Checkroom, null, tint = pal[0], modifier = Modifier.size(54.dp))
+                                    }
+                                    // Outfit label extracted from the message text
+                                    val label = msg.text.substringAfter("\"").substringBefore("\"").take(30)
+                                    if (label.isNotBlank()) {
+                                        Text(
+                                            "Outfit for:\n\"$label\"",
+                                            color = c.text,
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            textAlign = TextAlign.Center,
+                                            modifier = Modifier.padding(horizontal = 16.dp)
+                                        )
+                                    }
+                                    // Style tags
+                                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                        listOf("✦ Curated", "AI Styled").forEach { tag ->
+                                            Box(
+                                                modifier = Modifier
+                                                    .clip(RoundedCornerShape(20.dp))
+                                                    .background(pal[0].copy(0.18f))
+                                                    .padding(horizontal = 8.dp, vertical = 3.dp)
+                                            ) {
+                                                Text(tag, color = pal[0], fontSize = 9.sp, fontWeight = FontWeight.SemiBold)
+                                            }
+                                        }
+                                    }
                                 }
                             }
                             Text(
@@ -722,12 +603,12 @@ fun MuseDressScreen(vm: AppViewModel) {
         if (showWelcome) {
             Box(
                 modifier = Modifier.fillMaxSize().background(Color.Black.copy(0.7f))
-                    .clickable { showWelcome = true; vm.museDressWelcomeSeen = true }
                     .pointerInput(Unit) { detectTapGestures { showWelcome = false; vm.museDressWelcomeSeen = true } },
                 contentAlignment = Alignment.Center
             ) {
                 Surface(
-                    modifier = Modifier.padding(28.dp).fillMaxWidth(),
+                    modifier = Modifier.padding(28.dp).fillMaxWidth()
+                        .pointerInput(Unit) { detectTapGestures { /* swallow taps on card */ } },
                     shape = RoundedCornerShape(24.dp),
                     color = c.surface
                 ) {
@@ -774,6 +655,7 @@ fun MuseDressScreen(vm: AppViewModel) {
 @Composable
 fun LogoutDialog(vm: AppViewModel) {
     val c = vm.themeColors
+    val ctx = LocalContext.current
     Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(0.6f)), contentAlignment = Alignment.Center) {
         Surface(modifier = Modifier.padding(32.dp).fillMaxWidth(), shape = RoundedCornerShape(24.dp), color = c.surface) {
             Column(modifier = Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally,
@@ -783,8 +665,8 @@ fun LogoutDialog(vm: AppViewModel) {
                 Text("Should CLOES save your account first?", color = c.textSub, fontSize = 14.sp, textAlign = TextAlign.Center)
                 Spacer(modifier = Modifier.height(4.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    OutlineButton("No, Logout", { vm.logout() }, modifier = Modifier.weight(1f))
-                    GradientButton("Yes, Save & Logout", { vm.logout() }, modifier = Modifier.weight(1f))
+                    OutlineButton("Cancel", { vm.showLogoutDialog = false }, modifier = Modifier.weight(1f))
+                    GradientButton("Yes, Save & Logout", { vm.logout(ctx) }, modifier = Modifier.weight(1f))
                 }
             }
         }
@@ -794,6 +676,7 @@ fun LogoutDialog(vm: AppViewModel) {
 @Composable
 fun DeleteAccountDialog(vm: AppViewModel) {
     val c = vm.themeColors
+    val ctx = LocalContext.current
     Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(0.6f)), contentAlignment = Alignment.Center) {
         Surface(modifier = Modifier.padding(28.dp).fillMaxWidth(), shape = RoundedCornerShape(24.dp), color = c.surface) {
             Column(modifier = Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally,
@@ -806,7 +689,7 @@ fun DeleteAccountDialog(vm: AppViewModel) {
                     GradientButton("STOP", { vm.showDeleteAccountDialog = false }, modifier = Modifier.weight(1f))
                     Box(
                         modifier = Modifier.weight(1f).clip(RoundedCornerShape(14.dp))
-                            .background(Color(0xFFEF4444)).clickable { vm.deleteAccount() }.padding(vertical = 13.dp),
+                            .background(Color(0xFFEF4444)).clickable { vm.deleteAccount(ctx) }.padding(vertical = 13.dp),
                         contentAlignment = Alignment.Center
                     ) { Text("PROCEED", color = Color.White, fontWeight = FontWeight.Bold) }
                 }
@@ -819,26 +702,39 @@ fun DeleteAccountDialog(vm: AppViewModel) {
 //  MUSE HISTORY  (Feature 4)
 // ══════════════════════════════════════════════════════════════════════════════
 data class MuseHistoryEntry(val id: Long, val date: String, val day: String, val time: String,
-    val year: String, val preview: String, val type: String) // "muse" | "dress"
+    val year: String, val preview: String, val type: String,
+    val month: String = "", val dayNum: Int = 0) // "muse" | "dress"
 
 @Composable
 fun MuseHistoryScreen(vm: AppViewModel) {
     val c = vm.themeColors
     var mode by remember { mutableStateOf("") } // "" = picker, "muse" | "dress"
     var selectedEntry by remember { mutableStateOf<MuseHistoryEntry?>(null) }
+    // Drill-down states
+    var selectedYear  by remember { mutableStateOf<String?>(null) }
+    var selectedMonth by remember { mutableStateOf<String?>(null) }
+    var selectedDay   by remember { mutableStateOf<Int?>(null) }
+    var searchQuery   by remember { mutableStateOf("") }
 
-    // Sample history entries (in production these come from actual stored chats)
+    // Full history data with month + dayNum fields
     val allHistory = remember {
         listOf(
-            MuseHistoryEntry(1, "Mar 10", "Monday", "9:41 AM", "2026", "What should I wear today?", "dress"),
-            MuseHistoryEntry(2, "Mar 10", "Monday", "11:20 AM", "2026", "I'm feeling anxious...", "muse"),
-            MuseHistoryEntry(3, "Mar 9", "Sunday", "3:15 PM", "2026", "Generate an outfit for clubbing", "dress"),
-            MuseHistoryEntry(4, "Mar 9", "Sunday", "8:02 PM", "2026", "Help me plan my week", "muse"),
-            MuseHistoryEntry(5, "Mar 8", "Saturday", "10:00 AM", "2026", "Does this look good?", "dress"),
-            MuseHistoryEntry(6, "Mar 7", "Friday", "6:45 PM", "2026", "I need motivation", "muse"),
+            MuseHistoryEntry(1,  "Mar 10", "Monday",    "9:41 AM",  "2026", "What should I wear today?",        "dress", "March",    10),
+            MuseHistoryEntry(2,  "Mar 10", "Monday",    "11:20 AM", "2026", "I'm feeling anxious...",           "muse",  "March",    10),
+            MuseHistoryEntry(3,  "Mar 9",  "Sunday",    "3:15 PM",  "2026", "Generate an outfit for clubbing",  "dress", "March",    9),
+            MuseHistoryEntry(4,  "Mar 9",  "Sunday",    "8:02 PM",  "2026", "Help me plan my week",             "muse",  "March",    9),
+            MuseHistoryEntry(5,  "Mar 8",  "Saturday",  "10:00 AM", "2026", "Does this look good?",             "dress", "March",    8),
+            MuseHistoryEntry(6,  "Mar 7",  "Friday",    "6:45 PM",  "2026", "I need motivation",                "muse",  "March",    7),
+            MuseHistoryEntry(7,  "Feb 20", "Friday",    "2:10 PM",  "2026", "Valentine's date outfit",          "dress", "February", 20),
+            MuseHistoryEntry(8,  "Feb 14", "Saturday",  "9:00 AM",  "2026", "Help me feel confident today",     "muse",  "February", 14),
+            MuseHistoryEntry(9,  "Jan 5",  "Sunday",    "7:30 PM",  "2026", "New year, new style?",             "dress", "January",  5),
+            MuseHistoryEntry(10, "Dec 25", "Wednesday", "8:00 AM",  "2025", "Christmas party outfit",           "dress", "December", 25),
+            MuseHistoryEntry(11, "Dec 31", "Tuesday",   "10:00 PM", "2025", "NYE outfit suggestions",           "dress", "December", 31),
+            MuseHistoryEntry(12, "Nov 3",  "Sunday",    "11:00 AM", "2025", "I need help planning my goals",    "muse",  "November", 3),
         )
     }
 
+    // ── Selected entry detail view ──────────────────────────────────────────
     if (selectedEntry != null) {
         val entry = selectedEntry!!
         Box(modifier = Modifier.fillMaxSize().background(c.bg)) {
@@ -871,6 +767,7 @@ fun MuseHistoryScreen(vm: AppViewModel) {
         return
     }
 
+    // ── Mode picker (Muse AI vs Muse Dress) ────────────────────────────────
     if (mode.isEmpty()) {
         Box(modifier = Modifier.fillMaxSize().background(c.bg)) {
             AuroraBackground(theme = vm.appTheme, modifier = Modifier.fillMaxSize())
@@ -892,7 +789,8 @@ fun MuseHistoryScreen(vm: AppViewModel) {
                             modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp))
                                 .background(Brush.linearGradient(listOf(Purple.copy(0.12f), Pink.copy(0.12f))))
                                 .border(1.dp, Purple.copy(0.2f), RoundedCornerShape(20.dp))
-                                .clickable { mode = type }.padding(20.dp)
+                                .clickable { mode = type; selectedYear = null; selectedMonth = null; selectedDay = null; searchQuery = "" }
+                                .padding(20.dp)
                         ) {
                             Column {
                                 Text(pair.first, color = c.text, fontSize = 17.sp, fontWeight = FontWeight.Bold)
@@ -910,6 +808,169 @@ fun MuseHistoryScreen(vm: AppViewModel) {
     }
 
     val filtered = allHistory.filter { it.type == mode }
+
+    // ── Day detail — list conversations on a specific day ──────────────────
+    if (selectedDay != null && selectedMonth != null && selectedYear != null) {
+        val dayEntries = filtered.filter { it.year == selectedYear && it.month == selectedMonth && it.dayNum == selectedDay }
+        Box(modifier = Modifier.fillMaxSize().background(c.bg)) {
+            Column(modifier = Modifier.fillMaxSize()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().background(c.surface2).statusBarsPadding()
+                        .padding(horizontal = 16.dp, vertical = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    NeuIconButton(icon = { Icon(Icons.Default.ArrowBack, null, tint = c.textMid, modifier = Modifier.size(18.dp)) },
+                        onClick = { selectedDay = null })
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("$selectedMonth ${selectedDay}, $selectedYear", color = c.text, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                        Text(if (dayEntries.isEmpty()) "No conversations" else "${dayEntries.size} conversation(s)", color = c.textSub, fontSize = 12.sp)
+                    }
+                }
+                if (dayEntries.isEmpty()) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text("✦", fontSize = 36.sp)
+                            Text("No conversations on this day", color = c.textSub, fontSize = 14.sp)
+                        }
+                    }
+                } else {
+                    LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        items(dayEntries) { entry ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp))
+                                    .background(c.surface).clickable { selectedEntry = entry }.padding(14.dp),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(modifier = Modifier.size(40.dp).clip(CircleShape)
+                                    .background(Purple.copy(0.15f)), contentAlignment = Alignment.Center) {
+                                    Text(if (entry.type == "dress") "👗" else "✦", fontSize = 18.sp)
+                                }
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(entry.preview, color = c.text, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                                    Text(entry.time, color = c.textSub, fontSize = 11.sp)
+                                }
+                                Icon(Icons.Default.ChevronRight, null, tint = c.textSub, modifier = Modifier.size(16.dp))
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return
+    }
+
+    // ── Month detail — show days of the selected month ─────────────────────
+    if (selectedMonth != null && selectedYear != null) {
+        val monthEntries = filtered.filter { it.year == selectedYear && it.month == selectedMonth }
+        val daysInMonth = when (selectedMonth) {
+            "February" -> if ((selectedYear?.toIntOrNull() ?: 2026) % 4 == 0) 29 else 28
+            "April", "June", "September", "November" -> 30
+            else -> 31
+        }
+        val activeDays = monthEntries.map { it.dayNum }.toSet()
+
+        Box(modifier = Modifier.fillMaxSize().background(c.bg)) {
+            Column(modifier = Modifier.fillMaxSize()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().background(c.surface2).statusBarsPadding()
+                        .padding(horizontal = 16.dp, vertical = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    NeuIconButton(icon = { Icon(Icons.Default.ArrowBack, null, tint = c.textMid, modifier = Modifier.size(18.dp)) },
+                        onClick = { selectedMonth = null })
+                    Text("$selectedMonth $selectedYear", color = c.text, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                }
+                LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    items((1..daysInMonth).toList()) { day ->
+                        val hasConvos = day in activeDays
+                        val dayEntries = monthEntries.filter { it.dayNum == day }
+                        Row(
+                            modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
+                                .background(if (hasConvos) Purple.copy(0.08f) else c.surface)
+                                .border(1.dp, if (hasConvos) Purple.copy(0.3f) else Color.Transparent, RoundedCornerShape(12.dp))
+                                .clickable { selectedDay = day }
+                                .padding(horizontal = 16.dp, vertical = 11.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                Box(modifier = Modifier.size(34.dp).clip(CircleShape)
+                                    .background(if (hasConvos) Purple.copy(0.2f) else c.surface2),
+                                    contentAlignment = Alignment.Center) {
+                                    Text("$day", color = if (hasConvos) Purple else c.textSub,
+                                        fontSize = 13.sp, fontWeight = if (hasConvos) FontWeight.Bold else FontWeight.Normal)
+                                }
+                                Column {
+                                    Text("$selectedMonth $day", color = if (hasConvos) c.text else c.textSub, fontSize = 13.sp)
+                                    if (hasConvos) Text("${dayEntries.size} conversation(s)", color = Purple, fontSize = 11.sp)
+                                    else Text("No conversations", color = c.textSub, fontSize = 11.sp)
+                                }
+                            }
+                            if (hasConvos) Icon(Icons.Default.ChevronRight, null, tint = Purple, modifier = Modifier.size(16.dp))
+                        }
+                    }
+                }
+            }
+        }
+        return
+    }
+
+    // ── Year detail — show months ────────────────────────────────────────────
+    if (selectedYear != null) {
+        val yearEntries = filtered.filter { it.year == selectedYear }
+        val months = listOf("January","February","March","April","May","June",
+                            "July","August","September","October","November","December")
+        val activeMonths = yearEntries.map { it.month }.toSet()
+
+        Box(modifier = Modifier.fillMaxSize().background(c.bg)) {
+            Column(modifier = Modifier.fillMaxSize()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().background(c.surface2).statusBarsPadding()
+                        .padding(horizontal = 16.dp, vertical = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    NeuIconButton(icon = { Icon(Icons.Default.ArrowBack, null, tint = c.textMid, modifier = Modifier.size(18.dp)) },
+                        onClick = { selectedYear = null })
+                    Text(selectedYear!!, color = c.text, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                }
+                LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(months) { month ->
+                        val hasConvos = month in activeMonths
+                        val count = yearEntries.count { it.month == month }
+                        Row(
+                            modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp))
+                                .background(if (hasConvos) Brush.linearGradient(listOf(Purple.copy(0.1f), Pink.copy(0.07f)))
+                                            else Brush.linearGradient(listOf(c.surface, c.surface)))
+                                .border(1.dp, if (hasConvos) Purple.copy(0.25f) else Color.Transparent, RoundedCornerShape(14.dp))
+                                .clickable(enabled = hasConvos) { if (hasConvos) selectedMonth = month }
+                                .padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column {
+                                Text(month, color = if (hasConvos) c.text else c.textSub, fontSize = 15.sp,
+                                    fontWeight = if (hasConvos) FontWeight.SemiBold else FontWeight.Normal)
+                                if (hasConvos) Text("$count conversation(s)", color = Purple, fontSize = 11.sp)
+                                else Text("No activity", color = c.textSub, fontSize = 11.sp)
+                            }
+                            if (hasConvos) Icon(Icons.Default.ChevronRight, null, tint = Purple, modifier = Modifier.size(18.dp))
+                        }
+                    }
+                }
+            }
+        }
+        return
+    }
+
+    // ── Top-level: Year list + search bar ──────────────────────────────────
+    val years = filtered.map { it.year }.distinct().sortedDescending()
+    val searchYears = if (searchQuery.isBlank()) years
+                      else years.filter { it.contains(searchQuery) }
+
     Box(modifier = Modifier.fillMaxSize().background(c.bg)) {
         Column(modifier = Modifier.fillMaxSize()) {
             Row(
@@ -922,31 +983,47 @@ fun MuseHistoryScreen(vm: AppViewModel) {
                 Text(if (mode == "muse") "Muse AI History" else "Muse Dress History",
                     color = c.text, fontSize = 18.sp, fontWeight = FontWeight.Bold)
             }
-            if (filtered.isEmpty()) {
+            // Search bar
+            Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 6.dp)
+                .clip(RoundedCornerShape(13.dp)).background(c.surface),
+                verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.Search, null, tint = c.textSub,
+                    modifier = Modifier.padding(start = 12.dp, end = 8.dp).size(16.dp))
+                TextField(value = searchQuery, onValueChange = { searchQuery = it },
+                    placeholder = { Text("Search by year...", color = c.textSub, fontSize = 13.sp) },
+                    singleLine = true,
+                    colors = TextFieldDefaults.colors(
+                        unfocusedContainerColor = Color.Transparent, focusedContainerColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent, focusedIndicatorColor = Color.Transparent,
+                        unfocusedTextColor = c.text, focusedTextColor = c.text),
+                    modifier = Modifier.fillMaxWidth())
+            }
+            Spacer(modifier = Modifier.height(4.dp))
+            if (searchYears.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("No history yet ✦", color = c.textSub, fontSize = 14.sp)
+                    Text("No history for \"$searchQuery\"", color = c.textSub, fontSize = 14.sp)
                 }
             } else {
                 LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(filtered) { entry ->
-                        Row(
-                            modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp))
-                                .background(c.surface).clickable { selectedEntry = entry }.padding(14.dp),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                    verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    items(searchYears) { year ->
+                        val yearCount = filtered.count { it.year == year }
+                        Box(
+                            modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp))
+                                .background(Brush.linearGradient(listOf(Purple.copy(0.12f), Pink.copy(0.1f))))
+                                .border(1.dp, Purple.copy(0.2f), RoundedCornerShape(18.dp))
+                                .clickable { selectedYear = year; searchQuery = "" }
+                                .padding(20.dp)
                         ) {
-                            Box(modifier = Modifier.size(40.dp).clip(CircleShape)
-                                .background(Purple.copy(0.15f)), contentAlignment = Alignment.Center) {
-                                Text(if (entry.type == "dress") "👗" else "✦", fontSize = 18.sp)
+                            Column {
+                                Text(year, color = c.text, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                                Text("$yearCount conversation(s)", color = c.textSub, fontSize = 12.sp)
                             }
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(entry.preview, color = c.text, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-                                Text("${entry.day} ${entry.date}, ${entry.year} · ${entry.time}", color = c.textSub, fontSize = 11.sp)
-                            }
-                            Icon(Icons.Default.ChevronRight, null, tint = c.textSub, modifier = Modifier.size(16.dp))
+                            Icon(Icons.Default.ChevronRight, null, tint = Purple,
+                                modifier = Modifier.align(Alignment.CenterEnd).size(22.dp))
                         }
                     }
+                    item { Spacer(modifier = Modifier.height(40.dp)) }
                 }
             }
         }
@@ -1272,10 +1349,20 @@ fun CloesEchoScreen(vm: AppViewModel) {
 @Composable
 fun SignUpScreen(vm: AppViewModel) {
     val c = vm.themeColors
-    var isSignUp by remember { mutableStateOf(true) }
+    val ctx = LocalContext.current
+    var isSignUp by remember { mutableStateOf(vm.showSignupPage) }
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var showGoogleWebView by remember { mutableStateOf(false) }
+
+    if (showGoogleWebView) {
+        GoogleAuthWebView(
+            vm = vm,
+            onDismiss = { showGoogleWebView = false }
+        )
+        return
+    }
 
     Box(modifier = Modifier.fillMaxSize().background(c.bg)) {
         AuroraBackground(theme = vm.appTheme, modifier = Modifier.fillMaxSize())
@@ -1286,7 +1373,7 @@ fun SignUpScreen(vm: AppViewModel) {
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 NeuIconButton(icon = { Icon(Icons.Default.ArrowBack, null, tint = c.textMid, modifier = Modifier.size(18.dp)) },
-                    onClick = { vm.showSignupPage = false; vm.showLoginPage = false })
+                    onClick = { vm.showSignupPage = false; vm.showLoginPage = false; vm.authError = null })
                 Text(if (isSignUp) "Create Account" else "Sign In", color = c.text, fontSize = 18.sp, fontWeight = FontWeight.Bold)
             }
 
@@ -1299,6 +1386,18 @@ fun SignUpScreen(vm: AppViewModel) {
                 Text(if (isSignUp) "Create your account to get started" else "Sign in to continue",
                     color = c.textSub, fontSize = 13.sp)
                 Spacer(modifier = Modifier.height(4.dp))
+
+                // Error message
+                vm.authError?.let { error ->
+                    Box(
+                        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
+                            .background(Color(0xFFEF4444).copy(0.12f))
+                            .border(1.dp, Color(0xFFEF4444).copy(0.3f), RoundedCornerShape(12.dp))
+                            .padding(12.dp)
+                    ) {
+                        Text(error, color = Color(0xFFEF4444), fontSize = 13.sp)
+                    }
+                }
 
                 if (isSignUp) {
                     OutlinedTextField(value = name, onValueChange = { name = it },
@@ -1328,7 +1427,7 @@ fun SignUpScreen(vm: AppViewModel) {
                 Box(
                     modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp))
                         .border(1.dp, c.border, RoundedCornerShape(14.dp))
-                        .clickable { vm.showToast("Google", "Google sign-in coming soon", "low") }.padding(14.dp),
+                        .clickable { showGoogleWebView = true }.padding(14.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -1337,22 +1436,95 @@ fun SignUpScreen(vm: AppViewModel) {
                     }
                 }
 
-                GradientButton(
-                    text = if (isSignUp) "Create Account" else "Sign In",
-                    onClick = {
-                        if (email.isBlank() || password.isBlank()) { vm.showToast("Auth", "Please fill all fields", "mid"); return@GradientButton }
-                        vm.showToast("Welcome", if (isSignUp) "Account created! Welcome to CLOES ✦" else "Welcome back ✦", "low")
-                        vm.showSignupPage = false; vm.showLoginPage = false
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                )
+                if (vm.isAuthLoading) {
+                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = Purple, modifier = Modifier.size(28.dp))
+                    }
+                } else {
+                    GradientButton(
+                        text = if (isSignUp) "Create Account" else "Sign In",
+                        onClick = {
+                            vm.authError = null
+                            if (email.isBlank() || password.isBlank()) {
+                                vm.authError = "Please fill all fields"
+                                return@GradientButton
+                            }
+                            if (isSignUp && name.isBlank()) {
+                                vm.authError = "Please enter your name"
+                                return@GradientButton
+                            }
+                            if (password.length < 6) {
+                                vm.authError = "Password must be at least 6 characters"
+                                return@GradientButton
+                            }
+                            if (isSignUp) {
+                                vm.doRegister(ctx, name, email, password)
+                            } else {
+                                vm.doLogin(ctx, email, password)
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
 
                 // Toggle sign in / sign up
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
                     Text(if (isSignUp) "Already have an account? " else "Don't have an account? ", color = c.textSub, fontSize = 13.sp)
                     Text(if (isSignUp) "Sign In" else "Sign Up", color = Purple, fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold, modifier = Modifier.clickable { isSignUp = !isSignUp })
+                        fontWeight = FontWeight.Bold, modifier = Modifier.clickable { isSignUp = !isSignUp; vm.authError = null })
                 }
+            }
+        }
+    }
+}
+
+// ── Google Auth WebView ──────────────────────────────────────────────────────
+@Composable
+fun GoogleAuthWebView(vm: AppViewModel, onDismiss: () -> Unit) {
+    val c = vm.themeColors
+    val ctx = LocalContext.current
+
+    Box(modifier = Modifier.fillMaxSize().background(c.bg)) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            Row(
+                modifier = Modifier.fillMaxWidth().background(c.surface2).statusBarsPadding()
+                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                NeuIconButton(icon = { Icon(Icons.Default.Close, null, tint = c.textMid, modifier = Modifier.size(18.dp)) },
+                    onClick = onDismiss)
+                Text("Sign in with Google", color = c.text, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            }
+
+            android.webkit.WebView(ctx).also { wv ->
+                wv.settings.javaScriptEnabled = true
+                wv.settings.domStorageEnabled = true
+                wv.webViewClient = object : android.webkit.WebViewClient() {
+                    override fun shouldOverrideUrlLoading(
+                        view: android.webkit.WebView?,
+                        request: android.webkit.WebResourceRequest?
+                    ): Boolean {
+                        val url = request?.url?.toString() ?: return false
+                        // Intercept the deep link callback: cloes://auth?token=...&onboarded=...
+                        if (url.startsWith("cloes://auth")) {
+                            val uri = android.net.Uri.parse(url)
+                            val token = uri.getQueryParameter("token")
+                            val onboarded = uri.getQueryParameter("onboarded") == "1"
+                            if (token != null) {
+                                vm.doGoogleAuthSuccess(ctx, token, onboarded)
+                            }
+                            onDismiss()
+                            return true
+                        }
+                        return false
+                    }
+                }
+                wv.loadUrl(com.cloes.app.data.CloesApi.googleAuthUrl())
+            }.let { webView ->
+                androidx.compose.ui.viewinterop.AndroidView(
+                    factory = { webView },
+                    modifier = Modifier.fillMaxSize()
+                )
             }
         }
     }
@@ -1493,3 +1665,215 @@ fun MuseTaskScreen(vm: AppViewModel) {
         }
     }
 }
+@Composable
+fun MuseDrawScreen(vm: AppViewModel) {
+    val c = vm.themeColors
+    var selectedTool by remember { mutableStateOf("pen") }
+    var selectedColor by remember { mutableStateOf(Pink) }
+    var strokeWidth by remember { mutableStateOf(6f) }
+    var showColorPicker by remember { mutableStateOf(false) }
+    var canvasCleared by remember { mutableStateOf(false) }
+    val paths = remember { mutableStateListOf<DrawnPath>() }
+    val redoStack = remember { mutableStateListOf<DrawnPath>() }
+    var currentPath by remember { mutableStateOf<DrawnPath?>(null) }
+    val scope = rememberCoroutineScope()
+
+    val tools = listOf(
+        "pen" to Icons.Default.Edit,
+        "marker" to Icons.Default.BorderColor,
+        "eraser" to Icons.Default.AutoFixNormal,
+        "fill" to Icons.Default.FormatColorFill,
+        "shape" to Icons.Default.Category,
+        "text" to Icons.Default.TextFields
+    )
+    val palette = listOf(
+        Pink, Purple, Cyan, Color(0xFFF59E0B), Color(0xFF22C55E),
+        Color(0xFFEF4444), Color.White, Color.Black,
+        Color(0xFF06B6D4), Color(0xFFFF6B35), Color(0xFF8B5CF6), Color(0xFF10B981)
+    )
+
+    Box(modifier = Modifier.fillMaxSize().background(c.bg)) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            // ── Top Bar ──────────────────────────────────────────────────
+            Row(
+                modifier = Modifier.fillMaxWidth().background(c.surface2)
+                    .statusBarsPadding()
+                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                NeuIconButton(
+                    icon = { Icon(Icons.Default.ArrowBack, null, tint = c.textMid, modifier = Modifier.size(18.dp)) },
+                    onClick = { vm.showMuseDraw = false }
+                )
+                Text(
+                    "Muse Draw",
+                    style = androidx.compose.ui.text.TextStyle(
+                        brush = Brush.linearGradient(listOf(Pink, Purple)),
+                        fontSize = 18.sp, fontWeight = FontWeight.Bold
+                    ),
+                    modifier = Modifier.weight(1f)
+                )
+                // Undo
+                NeuIconButton(
+                    icon = { Icon(Icons.Default.Undo, null, tint = if (paths.isNotEmpty()) Purple else c.textSub, modifier = Modifier.size(18.dp)) },
+                    onClick = { if (paths.isNotEmpty()) { redoStack.add(paths.removeLast()) } }
+                )
+                // Redo
+                NeuIconButton(
+                    icon = { Icon(Icons.Default.Redo, null, tint = if (redoStack.isNotEmpty()) Purple else c.textSub, modifier = Modifier.size(18.dp)) },
+                    onClick = { if (redoStack.isNotEmpty()) { paths.add(redoStack.removeLast()) } }
+                )
+                // Clear
+                NeuIconButton(
+                    icon = { Icon(Icons.Default.DeleteSweep, null, tint = Color(0xFFEF4444), modifier = Modifier.size(18.dp)) },
+                    onClick = { paths.clear(); redoStack.clear() }
+                )
+                // Save
+                NeuIconButton(
+                    icon = { Icon(Icons.Default.Save, null, tint = Color(0xFF22C55E), modifier = Modifier.size(18.dp)) },
+                    onClick = {
+                        vm.earnCoins(2, "Muse Draw saved")
+                        vm.showToast("Muse Draw", "Drawing saved! +2 coins ✦", "low")
+                    }
+                )
+            }
+
+            // ── Tool Bar ─────────────────────────────────────────────────
+            Row(
+                modifier = Modifier.fillMaxWidth().background(c.surface)
+                    .padding(horizontal = 8.dp, vertical = 6.dp),
+                horizontalArrangement = Arrangement.SpaceAround,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                tools.forEach { (tool, icon) ->
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(if (selectedTool == tool) Purple.copy(0.2f) else Color.Transparent)
+                            .clickable { selectedTool = tool },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(icon, null,
+                            tint = if (selectedTool == tool) Purple else c.textSub,
+                            modifier = Modifier.size(20.dp))
+                    }
+                }
+                // Color swatch
+                Box(
+                    modifier = Modifier
+                        .size(28.dp)
+                        .clip(CircleShape)
+                        .background(selectedColor)
+                        .border(2.dp, if (showColorPicker) Purple else c.border, CircleShape)
+                        .clickable { showColorPicker = !showColorPicker }
+                )
+            }
+
+            // ── Stroke Slider ─────────────────────────────────────────────
+            Row(
+                modifier = Modifier.fillMaxWidth().background(c.surface2)
+                    .padding(horizontal = 16.dp, vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(Icons.Default.LineWeight, null, tint = c.textSub, modifier = Modifier.size(16.dp))
+                Slider(
+                    value = strokeWidth,
+                    onValueChange = { strokeWidth = it },
+                    valueRange = 2f..30f,
+                    modifier = Modifier.weight(1f),
+                    colors = SliderDefaults.colors(thumbColor = Purple, activeTrackColor = Purple)
+                )
+                Text("${strokeWidth.toInt()}px", color = c.textSub, fontSize = 11.sp)
+            }
+
+            // ── Canvas ────────────────────────────────────────────────────
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .background(Color.White)
+                    .pointerInput(selectedTool, selectedColor, strokeWidth) {
+                        detectDragGestures(
+                            onDragStart = { offset ->
+                                currentPath = DrawnPath(
+                                    color = if (selectedTool == "eraser") Color.White else selectedColor,
+                                    strokeWidth = if (selectedTool == "eraser") strokeWidth * 3 else strokeWidth,
+                                    points = mutableListOf(offset)
+                                )
+                            },
+                            onDrag = { _, drag ->
+                                currentPath?.points?.add(
+                                    (currentPath!!.points.last() + drag)
+                                )
+                                currentPath = currentPath?.copy()
+                            },
+                            onDragEnd = {
+                                currentPath?.let { paths.add(it); redoStack.clear() }
+                                currentPath = null
+                            }
+                        )
+                    }
+            ) {
+                androidx.compose.foundation.Canvas(modifier = Modifier.fillMaxSize()) {
+                    (paths + listOfNotNull(currentPath)).forEach { dp ->
+                        if (dp.points.size > 1) {
+                            val path = Path()
+                            path.moveTo(dp.points[0].x, dp.points[0].y)
+                            dp.points.drop(1).forEach { pt -> path.lineTo(pt.x, pt.y) }
+                            drawPath(
+                                path = path,
+                                color = dp.color,
+                                style = androidx.compose.ui.graphics.drawscope.Stroke(
+                                    width = dp.strokeWidth,
+                                    cap = StrokeCap.Round,
+                                    join = StrokeJoin.Round
+                                )
+                            )
+                        }
+                    }
+                }
+                if (paths.isEmpty() && currentPath == null) {
+                    Text(
+                        "✦ Tap and drag to draw",
+                        color = Color.LightGray,
+                        fontSize = 14.sp,
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                }
+            }
+
+            // ── Color Picker Row ─────────────────────────────────────────
+            AnimatedVisibility(visible = showColorPicker) {
+                LazyRow(
+                    modifier = Modifier.fillMaxWidth().background(c.surface2).padding(10.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(palette) { col ->
+                        Box(
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clip(CircleShape)
+                                .background(col)
+                                .border(if (selectedColor == col) 3.dp else 1.dp,
+                                    if (selectedColor == col) Purple else c.border, CircleShape)
+                                .clickable { selectedColor = col; showColorPicker = false }
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+data class DrawnPath(
+    val color: Color,
+    val strokeWidth: Float,
+    val points: MutableList<androidx.compose.ui.geometry.Offset>
+)
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  MUSE CLOTHING SCREEN  (Feature 2) — choice picker
+// ══════════════════════════════════════════════════════════════════════════════

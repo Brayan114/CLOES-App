@@ -5,11 +5,13 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.draw.*
 import androidx.compose.ui.graphics.*
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.*
 import androidx.compose.ui.unit.*
 import com.cloes.app.ui.components.*
@@ -19,6 +21,7 @@ import com.cloes.app.viewmodel.AppViewModel
 @Composable
 fun SplashScreen(vm: AppViewModel) {
     val c = vm.themeColors
+    val ctx = LocalContext.current
     val infiniteTransition = rememberInfiniteTransition(label = "splash")
     val floatY by infiniteTransition.animateFloat(
         initialValue = 0f, targetValue = -10f,
@@ -30,6 +33,13 @@ fun SplashScreen(vm: AppViewModel) {
         animationSpec = infiniteRepeatable(tween(2000, easing = FastOutSlowInEasing), RepeatMode.Reverse),
         label = "rotate"
     )
+
+    // Auto-check saved session on first launch
+    LaunchedEffect(Unit) {
+        if (!vm.hasCheckedSession) {
+            vm.checkSavedSession(ctx)
+        }
+    }
 
     Box(modifier = Modifier.fillMaxSize().systemBarsPadding()) {
         AuroraBackground(theme = vm.appTheme, modifier = Modifier.fillMaxSize())
@@ -57,18 +67,34 @@ fun SplashScreen(vm: AppViewModel) {
                 letterSpacing = 2.sp, fontWeight = FontWeight.Medium,
                 modifier = Modifier.padding(top = 4.dp, bottom = 36.dp))
 
-            Column(verticalArrangement = Arrangement.spacedBy(11.dp),
-                modifier = Modifier.widthIn(max = 320.dp).fillMaxWidth()) {
-                // Only one button — Sign In (no Quick Enter)
-                GradientButton(
-                    text = "Sign In ✦",
-                    onClick = { vm.currentScreen = "onboard" },
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Text("No phone number, no ads, no trace.",
-                    color = c.textSub, fontSize = 12.sp,
-                    modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 8.dp))
+            if (vm.isAuthLoading) {
+                CircularProgressIndicator(color = Purple, modifier = Modifier.size(32.dp))
+                Spacer(modifier = Modifier.height(12.dp))
+                Text("Checking session…", color = c.textSub, fontSize = 12.sp)
+            } else {
+                Column(verticalArrangement = Arrangement.spacedBy(11.dp),
+                    modifier = Modifier.widthIn(max = 320.dp).fillMaxWidth()) {
+                    GradientButton(
+                        text = "Create Account ✦",
+                        onClick = { vm.showSignupPage = true },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Box(
+                        modifier = Modifier.fillMaxWidth()
+                            .clip(RoundedCornerShape(16.dp))
+                            .border(1.5.dp, Purple, RoundedCornerShape(16.dp))
+                            .clickable { vm.showLoginPage = true }
+                            .padding(vertical = 14.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("Sign In", color = Purple, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    }
+                    Text("No phone number, no ads, no trace.",
+                        color = c.textSub, fontSize = 12.sp,
+                        modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 8.dp))
+                }
             }
         }
     }
 }
+

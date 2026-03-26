@@ -17,6 +17,8 @@
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.WAKE_LOCK" /> <!-- Required by older versions of Google Play services to create IID tokens -->
@@ -42,6 +44,7 @@
         android:usesCleartextTraffic="true" >
         <activity
             android:name="com.cloes.app.MainActivity"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|fontScale|smallestScreenSize"
             android:exported="true"
             android:theme="@style/Theme.CloesApp"
             android:windowSoftInputMode="adjustResize" >

@@ -1,28 +1,53 @@
 package com.cloes.app
 
+import android.content.res.Configuration
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.cloes.app.ui.CloesApp
 import com.cloes.app.viewmodel.AppViewModel
 
 class MainActivity : ComponentActivity() {
+    // Cap font scale so large system fonts don't break layouts
+    override fun attachBaseContext(newBase: android.content.Context) {
+        val config = Configuration(newBase.resources.configuration)
+        if (config.fontScale > 1.2f) config.fontScale = 1.2f
+        val ctx = newBase.createConfigurationContext(config)
+        super.attachBaseContext(ctx)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window, false)
         enableEdgeToEdge()
+
+        // Force dark status bar icons-on-dark-background for dark mode
+        window.statusBarColor = android.graphics.Color.TRANSPARENT
+        val controller = WindowInsetsControllerCompat(window, window.decorView)
+        // isAppearanceLightStatusBars = true → dark icons (for light bg)
+        // isAppearanceLightStatusBars = false → light icons (for dark bg)
+        val isDark = resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
+        controller.isAppearanceLightStatusBars = !isDark
+
         setContent {
             MaterialTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
@@ -33,7 +58,6 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-// ── Back Handler composable — handles Android back button app-wide ─────────────
 @Composable
 fun CloesBackHandler(vm: AppViewModel) {
     val dispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
@@ -41,31 +65,35 @@ fun CloesBackHandler(vm: AppViewModel) {
         object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 when {
-                    // Side panel / feature screens — close them
-                    vm.showSidePanel        -> vm.showSidePanel = false
-                    vm.showMuseDraw         -> vm.showMuseDraw = false
-                    vm.showMuseClothing     -> vm.showMuseClothing = false
-                    vm.showMuseHistory      -> vm.showMuseHistory = false
-                    vm.showAudioExtractor   -> vm.showAudioExtractor = false
-                    vm.showCloesEcho        -> vm.showCloesEcho = false
-                    vm.showSignupPage       -> vm.showSignupPage = false
-                    vm.showLoginPage        -> vm.showLoginPage = false
-                    vm.showMuseTask         -> vm.showMuseTask = false
-                    // Dialogs
-                    vm.showLogoutDialog     -> vm.showLogoutDialog = false
-                    vm.showDeleteAccountDialog -> vm.showDeleteAccountDialog = false
-                    vm.showSettings         -> vm.showSettings = false
-                    vm.showEditContact      -> vm.showEditContact = false
-                    vm.showEmergency        -> vm.showEmergency = false
-                    vm.showCallScreen       -> vm.showCallScreen = false
-                    vm.showVibeShorts       -> vm.showVibeShorts = false
-                    vm.showProfileVibe      -> vm.showProfileVibe = false
-                    // Chat views — close to main
-                    vm.showGroupChatView    -> vm.showGroupChatView = false
-                    vm.currentChatId != null -> vm.closeChat()
-                    // Bottom tabs — if NOT on messages, go back to messages
-                    vm.currentTab != "chats" -> vm.currentTab = "chats"
-                    // On Messages tab: let the system handle (exit app)
+                    vm.showAnimaForge            -> vm.showAnimaForge = false
+                    vm.showSidePanel             -> vm.showSidePanel = false
+                    vm.showMuseCreate            -> { vm.showMuseCanvas = false; vm.showMuseCreateProjects = false; vm.showMuseCreate = false }
+                    vm.showMuseClothing          -> vm.showMuseClothing = false
+                    vm.showMuseHistory           -> vm.showMuseHistory = false
+                    vm.showAudioExtractor        -> vm.showAudioExtractor = false
+                    vm.showCloesEcho             -> vm.showCloesEcho = false
+                    vm.showSignupPage            -> vm.showSignupPage = false
+                    vm.showLoginPage             -> vm.showLoginPage = false
+                    vm.showMuseTask              -> vm.showMuseTask = false
+                    vm.showSharedSpace           -> vm.showSharedSpace = false
+                    vm.showUnsentDrawer          -> vm.showUnsentDrawer = false
+                    vm.showVoiceFingerprint      -> vm.showVoiceFingerprint = false
+                    vm.showMeetPage              -> vm.showMeetPage = false
+                    vm.showBloomHistory          -> vm.showBloomHistory = false
+                    vm.showVibeVisibilitySettings -> vm.showVibeVisibilitySettings = false
+                    vm.showLogoutDialog          -> vm.showLogoutDialog = false
+                    vm.showDeleteAccountDialog   -> vm.showDeleteAccountDialog = false
+                    vm.showSettings              -> vm.showSettings = false
+                    vm.showEditContact           -> vm.showEditContact = false
+                    vm.showEmergency             -> vm.showEmergency = false
+                    vm.showCallScreen            -> vm.showCallScreen = false
+                    vm.showVibeShorts            -> vm.showVibeShorts = false
+                    vm.showProfileVibe           -> vm.showProfileVibe = false
+                    vm.showGroupChatView         -> vm.showGroupChatView = false
+                    vm.showBloomRitual           -> vm.showBloomRitual = false
+                    vm.showMoodMessageDialog     -> vm.showMoodMessageDialog = false
+                    vm.currentChatId != null     -> vm.closeChat()
+                    vm.currentTab != "chats"     -> vm.currentTab = "chats"
                     else -> {
                         isEnabled = false
                         dispatcher?.onBackPressed()

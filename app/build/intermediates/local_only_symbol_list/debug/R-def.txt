@@ -10,6 +10,7 @@ color purple_700
 color teal_200
 color teal_700
 color white
+drawable cloes_logo
 drawable ic_launcher
 drawable ic_launcher_background
 drawable ic_launcher_foreground
@@ -20,6 +21,9 @@ drawable muse_logo_4
 drawable muse_logo_5
 mipmap ic_launcher
 mipmap ic_launcher_round
+raw muse_on_it
+raw muse_sorry
+raw muse_yes
 string app_name
 string gcm_defaultSenderId
 string google_api_key

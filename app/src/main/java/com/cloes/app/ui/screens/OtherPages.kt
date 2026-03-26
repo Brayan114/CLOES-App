@@ -22,6 +22,7 @@ import androidx.compose.ui.draw.*
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.text.font.*
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.*
 import com.cloes.app.data.*
 import com.cloes.app.ui.components.*
@@ -29,6 +30,7 @@ import com.cloes.app.ui.theme.*
 import com.cloes.app.R
 import com.cloes.app.viewmodel.AppViewModel
 import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import kotlinx.coroutines.delay
 import coil.compose.AsyncImage
 import androidx.compose.ui.layout.ContentScale
@@ -55,6 +57,11 @@ fun BloomPage(vm: AppViewModel) {
                 Text("How are your connections doing?", color = c.textSub, fontSize = 12.sp,
                     modifier = Modifier.padding(top = 2.dp))
             }
+            // Bloom History shortcut
+            NeuIconButton(
+                icon = { Icon(Icons.Default.Timeline, null, tint = Pink, modifier = Modifier.size(20.dp)) },
+                onClick = { vm.bloomHistoryContactId = vm.contacts.firstOrNull()?.id; vm.showBloomHistory = true }
+            )
             Box(modifier = Modifier.clip(RoundedCornerShape(20.dp))
                 .background(Purple.copy(0.1f))
                 .padding(horizontal = 12.dp, vertical = 6.dp)) {
@@ -115,16 +122,35 @@ private fun BloomContactCard(contact: Contact, vm: AppViewModel, c: CloesColors)
         msgCount > 1                                     -> 55
         else                                             -> 30
     }
-    val healthColor = when {
-        score >= 80 -> Color(0xFF22C55E)
-        score >= 55 -> Color(0xFFF59E0B)
-        else        -> Color(0xFFEF4444)
-    }
+    // ── Bloom Decay Animation ──────────────────────────────────────────────
+    // Orb color smoothly transitions: warm gold (thriving) → purple (growing) → cool blue (fading)
+    val bloomScore = contact.bloomScore.takeIf { it != 50 } ?: score
+    val healthColor by androidx.compose.animation.animateColorAsState(
+        targetValue = when {
+            bloomScore >= 70 -> androidx.compose.ui.graphics.Color(0xFFFF9020) // warm gold — thriving
+            bloomScore >= 40 -> androidx.compose.ui.graphics.Color(0xFFBB6EF5) // mid purple — growing
+            else             -> androidx.compose.ui.graphics.Color(0xFF4A5A8A) // cool blue-grey — fading
+        },
+        animationSpec = androidx.compose.animation.core.tween(
+            durationMillis = 1200,
+            easing = androidx.compose.animation.core.FastOutSlowInEasing
+        ),
+        label = "bloomDecay"
+    )
     val healthLabel = when {
-        score >= 80 -> "Strong ✦"
-        score >= 55 -> "Growing"
-        else        -> "Needs love"
+        bloomScore >= 70 -> "Thriving ✦"
+        bloomScore >= 40 -> "Growing"
+        else             -> "Fading…"
     }
+    // Animated pulse alpha for ambient presence
+    val infiniteTransition = androidx.compose.animation.core.rememberInfiniteTransition(label = "bloom")
+    val pulseAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.4f, targetValue = 1f,
+        animationSpec = androidx.compose.animation.core.infiniteRepeatable(
+            animation = androidx.compose.animation.core.tween(1800),
+            repeatMode = androidx.compose.animation.core.RepeatMode.Reverse
+        ), label = "pulse"
+    )
     val lastMsg = contact.messages.lastOrNull()
 
     GlassCard(modifier = Modifier.fillMaxWidth()
@@ -132,9 +158,34 @@ private fun BloomContactCard(contact: Contact, vm: AppViewModel, c: CloesColors)
         Column(modifier = Modifier.padding(14.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                // Avatar
-                Box(modifier = Modifier.size(46.dp).clip(RoundedCornerShape(14.dp))) {
-                    FragmentAvatar(paletteIndex = contact.paletteIndex, seed = fragSeed(contact.id))
+                // Avatar with ambient presence glow ring when door is open
+                val isPresenceOpen = vm.openContacts.contains(contact.id)
+                Box(modifier = Modifier.size(46.dp)) {
+                    Box(modifier = Modifier
+                        .fillMaxSize()
+                        .clip(RoundedCornerShape(14.dp))
+                        .then(if (isPresenceOpen)
+                            Modifier.border(2.dp,
+                                Brush.linearGradient(listOf(
+                                    androidx.compose.ui.graphics.Color(0xFF22C55E).copy(pulseAlpha),
+                                    androidx.compose.ui.graphics.Color(0xFF4DFFD4).copy(pulseAlpha)
+                                )),
+                                RoundedCornerShape(14.dp))
+                        else Modifier)
+                    ) {
+                        FragmentAvatar(paletteIndex = contact.paletteIndex, seed = fragSeed(contact.id))
+                    }
+                    // Tiny green door-open dot
+                    if (isPresenceOpen) {
+                        Box(modifier = Modifier
+                            .size(10.dp)
+                            .align(Alignment.BottomEnd)
+                            .offset(x = 2.dp, y = 2.dp)
+                            .clip(CircleShape)
+                            .background(androidx.compose.ui.graphics.Color(0xFF22C55E))
+                            .border(1.5.dp, c.bg, CircleShape)
+                        )
+                    }
                 }
                 Column(modifier = Modifier.weight(1f)) {
                     Row(verticalAlignment = Alignment.CenterVertically,
@@ -157,18 +208,25 @@ private fun BloomContactCard(contact: Contact, vm: AppViewModel, c: CloesColors)
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // Relationship health bar
+            // Bloom decay bar with animated orb glow
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Row(modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("Connection health", color = c.textSub, fontSize = 10.sp)
-                    Text("$score%", color = healthColor, fontSize = 10.sp,
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        // Animated decay orb
+                        Box(
+                            modifier = Modifier.size(10.dp).clip(CircleShape)
+                                .background(healthColor.copy(alpha = pulseAlpha))
+                        )
+                        Text("Bloom", color = c.textSub, fontSize = 10.sp)
+                    }
+                    Text("$bloomScore", color = healthColor, fontSize = 10.sp,
                         fontWeight = FontWeight.SemiBold)
                 }
                 Box(modifier = Modifier.fillMaxWidth().height(5.dp)
                     .clip(RoundedCornerShape(3.dp)).background(Purple.copy(0.1f))) {
                     Box(modifier = Modifier
-                        .fillMaxWidth(score / 100f)
+                        .fillMaxWidth((bloomScore / 100f).coerceIn(0f, 1f))
                         .fillMaxHeight()
                         .clip(RoundedCornerShape(3.dp))
                         .background(Brush.horizontalGradient(
@@ -331,7 +389,9 @@ val TONE_OPTIONS = listOf(
 
 @Composable
 private fun GroupDetailScreen(group: ContactGroup, vm: AppViewModel, c: CloesColors, onBack: () -> Unit) {
-    val members = vm.contacts.filter { group.members.contains(it.id) }.toMutableList()
+    // Re-derive members whenever vm.groups changes so remove works
+    val liveGroup = vm.groups.find { it.id == group.id } ?: group
+    val members = vm.contacts.filter { liveGroup.members.contains(it.id) }.toMutableList()
     var showAddMember by remember { mutableStateOf(false) }
     var currentTone by remember { mutableStateOf(group.tone) }
     var museEnabled by remember { mutableStateOf(group.muse) }
@@ -452,7 +512,13 @@ private fun GroupDetailScreen(group: ContactGroup, vm: AppViewModel, c: CloesCol
                         Text("@${contact.handle}", color = c.textSub, fontSize = 11.sp)
                     }
                     IconButton(onClick = {
-                        group.members.remove(contact.id)
+                        val idx = vm.groups.indexOfFirst { it.id == group.id }
+                        if (idx >= 0) {
+                            val updated = vm.groups[idx].members.toMutableList().also { it.remove(contact.id) }
+                            vm.groups[idx] = vm.groups[idx].copy(members = updated)
+                        } else {
+                            group.members.remove(contact.id)
+                        }
                         vm.showToast(contact.name, "Removed from ${group.name}", "low")
                     }) {
                         Icon(Icons.Default.PersonRemove, null, tint = c.textSub, modifier = Modifier.size(16.dp))
@@ -548,12 +614,12 @@ fun MuseAIPage(vm: AppViewModel) {
                 Text("Muse ✦", color = c.text, fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 Text("Your private AI companion", color = c.textSub, fontSize = 12.sp)
                 Spacer(modifier = Modifier.height(10.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
-                    listOf("Schedule 🗓", "Task ✅", "Attach 📎").forEach { action ->
-                        TabChip(text = action, selected = false, onClick = {
-                            vm.showToast("Muse", "$action — coming soon ✦", "low")
-                        })
-                    }
+                Row(horizontalArrangement = Arrangement.spacedBy(7.dp),
+                    modifier = Modifier.horizontalScroll(rememberScrollState())) {
+                    TabChip("Schedule 🗓", false, onClick = { vm.showToast("Muse", "Schedule — coming soon ✦", "low") })
+                    TabChip("Task ✅",     false, onClick = { vm.showMuseTask = true })
+                    TabChip("History 📖", false, onClick = { vm.showMuseHistory = true })
+                    TabChip("🎙 Voice",   false, onClick = { vm.showVoiceFingerprint = true })
                 }
             }
         }
@@ -607,6 +673,39 @@ fun MuseAIPage(vm: AppViewModel) {
                     )
                 )
             }
+            // Voice command mic button
+            Box(
+                modifier = Modifier.size(40.dp).clip(RoundedCornerShape(13.dp))
+                    .background(if (vm.museListening) Pink.copy(0.2f) else c.surface)
+                    .border(1.dp, if (vm.museListening) Pink else c.border, RoundedCornerShape(13.dp))
+                    .clickable {
+                        if (!vm.museListening) {
+                            vm.museListening = true
+                            // Simulate voice pick-up — real impl would use SpeechRecognizer
+                            // For demo: user typed input triggers command
+                            scope.launch {
+                                delay(1500)
+                                vm.museListening = false
+                                if (input.isNotBlank()) {
+                                    vm.handleMuseVoiceCommand(input)
+                                    input = ""
+                                } else {
+                                    vm.handleMuseVoiceCommand("MUSE")
+                                }
+                            }
+                        } else {
+                            vm.museListening = false
+                        }
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    if (vm.museListening) Icons.Default.GraphicEq else Icons.Default.Mic,
+                    null,
+                    tint = if (vm.museListening) Pink else c.textMid,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
             Box(
                 modifier = Modifier.size(40.dp).clip(RoundedCornerShape(13.dp))
                     .background(Brush.linearGradient(listOf(Pink, Purple)))
@@ -634,6 +733,11 @@ fun MuseAIPage(vm: AppViewModel) {
         }
     }   // end Column
 
+    // Voice command reply overlay
+    if (vm.showMuseVoiceReply) {
+        MuseVoiceReplyOverlay(vm)
+    }
+
     // Full-screen Muse logo overlay (shown above everything)
     if (showFullLogo) {
         Box(modifier = Modifier.fillMaxSize()
@@ -656,7 +760,7 @@ fun MuseAIPage(vm: AppViewModel) {
                     modifier = Modifier.fillMaxWidth().padding(32.dp)
                 )
             }
-            Text("Tap anywhere to close", color = Color.White.copy(0.3f), fontSize = 12.sp,
+            Text("Tap anywhere to close", color = Color.White.copy(0.85f), fontSize = 12.sp,
                 modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 48.dp))
         }
     }
@@ -684,6 +788,14 @@ fun VibePage(vm: AppViewModel) {
                 NeuIconButton(
                     icon = { Icon(Icons.Default.Add, null, tint = c.textMid, modifier = Modifier.size(18.dp)) },
                     onClick = { vm.showUploadVideo = true }
+                )
+                // Manage visibility button
+                NeuIconButton(
+                    icon = { Icon(Icons.Default.Visibility, null, tint = Cyan, modifier = Modifier.size(18.dp)) },
+                    onClick = {
+                        vm.vibeVisibilitySettingsVideoId = vm.vibeVideos.firstOrNull()?.id
+                        vm.showVibeVisibilitySettings = true
+                    }
                 )
                 NeuIconButton(
                     icon = { Icon(Icons.Default.Search, null, tint = c.textMid, modifier = Modifier.size(18.dp)) },
@@ -1014,9 +1126,6 @@ fun SettingsOverlay(vm: AppViewModel) {
                 SettingsCard {
                     SettingsRow(Icons.Default.Palette, "Theme", vm.appTheme.name,
                         onClick = { vm.showThemeModal = true })
-                    HorizontalDivider(color = c.border2, thickness = 0.5.dp)
-                    SettingsRow(Icons.Default.TextFields, "Font Style", vm.appFont,
-                        onClick = { vm.showFontPicker = true })
                 }
                 Spacer(modifier = Modifier.height(12.dp))
 
@@ -1078,6 +1187,19 @@ fun SettingsOverlay(vm: AppViewModel) {
                     HorizontalDivider(color = c.border2, thickness = 0.5.dp)
                     SettingsRow(Icons.Default.VisibilityOff, "Stealth Mode", "Hide read receipts",
                         toggle = true, toggleOn = false, onToggle = {})
+                    HorizontalDivider(color = c.border2, thickness = 0.5.dp)
+                    SettingsRow(Icons.Default.Nightlight, "Ghost Mode",
+                        if (vm.ghostModeEnabled) "On — invisible to all but CLOESED contacts" else "Off — visible to all contacts",
+                        toggle = true, toggleOn = vm.ghostModeEnabled,
+                        onToggle = {
+                            vm.ghostModeEnabled = it
+                            vm.showToast("Ghost Mode", if (it) "👻 You are now a ghost ✦" else "Ghost mode off", "low")
+                        })
+                    HorizontalDivider(color = c.border2, thickness = 0.5.dp)
+                    SettingsRow(Icons.Default.RadioButtonChecked, "Ambient Presence",
+                        if (vm.ambientPresenceEnabled) "On — soft pulse shows you're there" else "Off",
+                        toggle = true, toggleOn = vm.ambientPresenceEnabled,
+                        onToggle = { vm.ambientPresenceEnabled = it })
                 }
                 Spacer(modifier = Modifier.height(12.dp))
 
@@ -1105,11 +1227,8 @@ fun SettingsOverlay(vm: AppViewModel) {
                 }
                 Spacer(modifier = Modifier.height(12.dp))
 
-                SectionLabel("Backup & Support")
+                SectionLabel("Support")
                 SettingsCard {
-                    SettingsRow(Icons.Default.Smartphone, "Phone Number Backup",
-                        onClick = { activeSection = "backup" })
-                    HorizontalDivider(color = c.border2, thickness = 0.5.dp)
                     SettingsRow(Icons.Default.Help, "How to Use CLOES",
                         onClick = { activeSection = "howto" })
                 }
@@ -1294,21 +1413,42 @@ private fun VibeManagerScreen(vm: AppViewModel, c: CloesColors, onBack: () -> Un
 // ─── How To Use Screen ────────────────────────────────────────────────────────
 @Composable
 private fun HowToUseScreen(c: CloesColors, onBack: () -> Unit) {
-    val steps = listOf(
-        Icons.Default.Person       to "Create your Fragment" to "Your Fragment is your identity — a unique light pattern only you have.",
-        Icons.Default.ChatBubble   to "Start a conversation" to "Find someone by their handle and tap to start a private, encrypted chat.",
-        Icons.Default.Favorite     to "Bloom — check your bonds" to "See how your relationships are doing. Bloom tracks connection health over time.",
-        Icons.Default.Groups       to "Circles" to "Group your contacts. Send circle-wide messages, set a Muse tone per group.",
-        Icons.Default.AutoAwesome  to "Meet Muse" to "Your private AI companion. Schedule, set tasks, or just talk.",
-        Icons.Default.PlayCircle   to "Vibe" to "Watch short videos shared by your world. React and share your own.",
-        Icons.Default.MonetizationOn to "Coins" to "Earn and spend CLOES Coins for premium features and stickers.",
-        Icons.Default.Warning      to "Emergency mode" to "One tap to alert your emergency contacts with your location.",
-        Icons.Default.Lock         to "Privacy first" to "All messages are end-to-end encrypted. No ads. No data selling."
+    var searchQuery by remember { mutableStateOf("") }
+    var selectedFeature by remember { mutableStateOf<Pair<String, String>?>(null) }
+
+    val allFeatures = listOf(
+        Triple(Icons.Default.Person,        "1. Your Fragment",           "Your Fragment is your unique visual identity — a light pattern only you possess. Set your name, handle, and palette in your profile settings."),
+        Triple(Icons.Default.ChatBubble,    "2. Messaging",               "Find contacts by handle, tap to open a chat. Send text, images, audio, video, stickers, polls, and location. Long-press any bubble to react, pin, edit, or delete. Swipe right to reply."),
+        Triple(Icons.Default.Favorite,      "3. Bloom Score",             "Bloom tracks the health of each relationship (0–100). Based on message frequency, calls, media shared, and streaks. Watch the orb glow warm when a bond is strong and cool when it fades. Bloom Rituals will nudge you to reconnect when a score drops below 30."),
+        Triple(Icons.Default.Groups,        "4. Circles",                 "Group your contacts into Circles (BESTIE, FAMILY, FRIENDS, WORK). Send a message to the entire Circle at once. Each Circle can have its own Muse AI tone. Tap a Circle to see all members and manage them."),
+        Triple(Icons.Default.AutoAwesome,   "5. Muse AI",                 "Your private AI companion. Chat freely, ask questions, set tasks. Say 'MUSE' aloud to wake it, 'SEND I LOVE YOU TO ALL THE PEOPLE IN MY FAMILY CIRCLES' to broadcast love. Muse Create is your animation studio. Muse Draw is your quick canvas."),
+        Triple(Icons.Default.PlayCircle,    "6. Vibe",                    "Short videos shared by your world — not the internet. Browse Mood, Muse, Focus, Daily, and Ambient categories. Double-tap to like. Tap the creator avatar to view their profile."),
+        Triple(Icons.Default.MonetizationOn,"7. Coins",                   "Earn 5 coins every 10 minutes of active use. Spend coins to unlock free mobile data browsing. Gift coins to contacts — it costs you something real, which makes it meaningful."),
+        Triple(Icons.Default.Warning,       "8. Emergency Mode",          "One tap sends your location and an SOS alert to your emergency contacts. Set them in Settings → Emergency Contacts."),
+        Triple(Icons.Default.Lock,          "9. CLOESED KEY",             "Lock specific chats behind a secret passphrase. Locked contacts are invisible to anyone without the key, even if your phone is unlocked."),
+        Triple(Icons.Default.Cabin,         "10. Shared Spaces",          "Every contact can have a private shared room you build together. Drop voice memos, photos, doodles, and inside jokes. Not a chat — more like a living memory of your friendship."),
+        Triple(Icons.Default.Draw,          "11. Muse Create",            "Full FlipaClip-style animation studio. Draw frame-by-frame with pen, marker, eraser, fill, and select tools. Copy/paste entire frames or selections. Choose from 10 canvas presets (YouTube, TikTok, Instagram and more). Save animations to Open Project."),
+        Triple(Icons.Default.EmojiEmotions, "12. Muse Draw",              "Quick single-canvas drawing tool. Pen, marker, eraser, fill, shapes, and text. Undo/redo. Save drawings as images."),
+        Triple(Icons.Default.Checkroom,     "13. Muse Clothing",          "Three modes: Cloes Buy (browse partner shops), Cloes Sell (create your seller account and sell anything), Cloes Dress (AI outfit stylist — upload your photo and get AI-generated outfit suggestions)."),
+        Triple(Icons.Default.HistoryEdu,    "14. Muse History",           "Every conversation with Muse AI is saved here. Browse by year, month, and day. Tap any session to revisit it."),
+        Triple(Icons.Default.PsychologyAlt, "15. The Unsent Drawer",      "Write messages you're not ready to send. They live privately in the Unsent Drawer inside each chat. If you choose to send one later, the recipient sees a small ✦ glyph and 'written a while ago' — that context changes everything about how it lands."),
+        Triple(Icons.Default.Nightlight,    "16. Ghost Mode",             "Enable in Settings → Privacy. You become present only for your CLOESED KEY contacts — invisible to everyone else. A true sanctuary mode."),
+        Triple(Icons.Default.NaturePeople,  "17. Seasonal Friendships",   "When a contact goes 90 days quiet, CLOES archives them as a Season — a beautiful summary card showing what you shared. Not a deletion. An acknowledgment that some friendships are seasonal."),
+        Triple(Icons.Default.AudioFile,     "18. Audio Extractor",        "Extract audio from any video on your device. Saved as an MP3 file you can share or use."),
+        Triple(Icons.Default.Shield,        "19. Cloes Echo",             "A hidden vault for files, photos, and links. Protected by your CLOESED KEY. Invisible until unlocked."),
+        Triple(Icons.Default.TaskAlt,       "20. Muse Task",              "Your private notes and to-do list. Write, pin, and check off tasks. Synced with Muse AI so Muse can remind you.")
     )
+
+    val filtered = if (searchQuery.isBlank()) allFeatures
+    else allFeatures.filter {
+        it.second.contains(searchQuery, ignoreCase = true) ||
+        it.third.contains(searchQuery, ignoreCase = true)
+    }
+
     Column(modifier = Modifier.fillMaxSize().background(c.bg)) {
+        // Top bar
         Row(modifier = Modifier.fillMaxWidth().background(c.surface2)
-            .statusBarsPadding()
-            .padding(horizontal = 16.dp, vertical = 14.dp),
+            .statusBarsPadding().padding(horizontal = 16.dp, vertical = 14.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             NeuIconButton(
@@ -1316,23 +1456,85 @@ private fun HowToUseScreen(c: CloesColors, onBack: () -> Unit) {
                 onClick = onBack)
             Text("How to Use CLOES", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = c.text)
         }
-        LazyColumn(contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            itemsIndexed(steps) { idx, (pair, desc) ->
-                val (icon, title) = pair
-                Row(modifier = Modifier.fillMaxWidth()
-                    .clip(RoundedCornerShape(16.dp)).background(c.surface)
-                    .padding(14.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+
+        // Search bar
+        Row(modifier = Modifier.fillMaxWidth().background(c.surface2)
+            .padding(horizontal = 16.dp, vertical = 8.dp)) {
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                placeholder = { Text("Search features...", color = c.textSub, fontSize = 13.sp) },
+                leadingIcon = { Icon(Icons.Default.Search, null, tint = c.textSub, modifier = Modifier.size(18.dp)) },
+                trailingIcon = {
+                    if (searchQuery.isNotBlank()) {
+                        IconButton(onClick = { searchQuery = "" }) {
+                            Icon(Icons.Default.Clear, null, tint = c.textSub, modifier = Modifier.size(16.dp))
+                        }
+                    }
+                },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(14.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = c.text, unfocusedTextColor = c.text,
+                    focusedBorderColor = Purple, unfocusedBorderColor = c.border,
+                    focusedContainerColor = c.surface, unfocusedContainerColor = c.surface
+                )
+            )
+        }
+
+        // Feature list
+        LazyColumn(contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            items(filtered) { (icon, title, desc) ->
+                Row(
+                    modifier = Modifier.fillMaxWidth()
+                        .clip(RoundedCornerShape(16.dp)).background(c.surface)
+                        .clickable { selectedFeature = Pair(title, desc) }
+                        .padding(14.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Box(modifier = Modifier.size(40.dp).clip(RoundedCornerShape(12.dp))
                         .background(Purple.copy(0.12f)), contentAlignment = Alignment.Center) {
                         Icon(icon, null, tint = Purple, modifier = Modifier.size(20.dp))
                     }
-                    Column {
-                        Text("${idx + 1}. $title", color = c.text, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
-                        Text(desc, color = c.textSub, fontSize = 12.sp,
-                            modifier = Modifier.padding(top = 3.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(title, color = c.text, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                        Text(desc.take(60) + if (desc.length > 60) "..." else "",
+                            color = c.textSub, fontSize = 11.sp, modifier = Modifier.padding(top = 2.dp))
                     }
+                    Icon(Icons.Default.ChevronRight, null, tint = c.textSub, modifier = Modifier.size(16.dp))
+                }
+            }
+            if (filtered.isEmpty()) {
+                item {
+                    Box(modifier = Modifier.fillMaxWidth().padding(40.dp), contentAlignment = Alignment.Center) {
+                        Text("No results for \"$searchQuery\"", color = c.textSub, fontSize = 13.sp)
+                    }
+                }
+            }
+        }
+    }
+
+    // Feature popup
+    selectedFeature?.let { (title, desc) ->
+        Box(
+            modifier = Modifier.fillMaxSize().background(Color.Black.copy(0.65f))
+                .clickable { selectedFeature = null },
+            contentAlignment = Alignment.Center
+        ) {
+            GlassCard(modifier = Modifier.padding(horizontal = 24.dp).clickable(onClick = {})) {
+                Column(modifier = Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Box(modifier = Modifier.size(36.dp).clip(RoundedCornerShape(10.dp))
+                            .background(Purple.copy(0.15f)), contentAlignment = Alignment.Center) {
+                            Icon(Icons.Default.AutoAwesome, null, tint = Purple, modifier = Modifier.size(18.dp))
+                        }
+                        Text(title, color = c.text, fontSize = 16.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                    }
+                    Text(desc, color = c.textMid, fontSize = 13.sp, lineHeight = 20.sp)
+                    GradientButton("Got it ✦", onClick = { selectedFeature = null })
                 }
             }
         }
@@ -2016,9 +2218,399 @@ fun ProfileQrOverlay(vm: AppViewModel, onDismiss: () -> Unit) {
 
         Text(
             "Tap anywhere to close",
-            color = Color.White.copy(0.3f),
+            color = Color.White.copy(0.85f),
             fontSize = 11.sp,
             modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 32.dp)
         )
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  MUSE VOICE REPLY OVERLAY — plays audio response + shows text
+// ══════════════════════════════════════════════════════════════════════════════
+@Composable
+fun MuseVoiceReplyOverlay(vm: AppViewModel) {
+    val c = vm.themeColors
+    val context = androidx.compose.ui.platform.LocalContext.current
+
+    // Play the correct audio file when overlay appears
+    LaunchedEffect(vm.museVoiceResponse) {
+        val rawId = when (vm.museVoiceResponse) {
+            "yes"   -> com.cloes.app.R.raw.muse_yes
+            "on_it" -> com.cloes.app.R.raw.muse_on_it
+            "sorry" -> com.cloes.app.R.raw.muse_sorry
+            else    -> null
+        }
+        rawId?.let { id: Int ->
+            try {
+                val mp: android.media.MediaPlayer? = android.media.MediaPlayer.create(context, id)
+                mp?.start()
+                mp?.setOnCompletionListener { it.release() }
+            } catch (e: Exception) { /* silent fail */ }
+        }
+        delay(3000)
+        vm.showMuseVoiceReply = false
+        vm.museListening = false
+    }
+
+    Box(
+        modifier = Modifier.fillMaxSize()
+            .background(Color.Black.copy(0.78f))
+            .clickable { vm.showMuseVoiceReply = false },
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(20.dp),
+            modifier = Modifier.padding(40.dp)
+        ) {
+            // Animated glow orb
+            Box(
+                modifier = Modifier.size(120.dp).clip(androidx.compose.foundation.shape.CircleShape)
+                    .background(
+                        Brush.radialGradient(listOf(
+                            when (vm.museVoiceResponse) {
+                                "yes"   -> Purple
+                                "on_it" -> Color(0xFF22C55E)
+                                else    -> Color(0xFFEF4444)
+                            },
+                            Color.Transparent
+                        ))
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    when (vm.museVoiceResponse) {
+                        "yes"   -> "✦"
+                        "on_it" -> "💜"
+                        else    -> "✕"
+                    },
+                    fontSize = 48.sp
+                )
+            }
+
+            Text(
+                when (vm.museVoiceResponse) {
+                    "yes"   -> "YES"
+                    "on_it" -> "OF COURSE,\nON IT"
+                    else    -> "SORRY I\nCAN'T DO THAT"
+                },
+                color = Color.White,
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+                letterSpacing = 2.sp,
+                style = androidx.compose.ui.text.TextStyle(
+                    brush = Brush.linearGradient(
+                        when (vm.museVoiceResponse) {
+                            "yes"   -> listOf(Purple, Pink)
+                            "on_it" -> listOf(Color(0xFF22C55E), Cyan)
+                            else    -> listOf(Color(0xFFEF4444), Color(0xFFF59E0B))
+                        }
+                    )
+                )
+            )
+
+            Text("Muse ✦", color = Color.White.copy(0.85f), fontSize = 12.sp, letterSpacing = 3.sp)
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  UNSENT DRAWER SCREEN — private messages never sent
+// ══════════════════════════════════════════════════════════════════════════════
+@Composable
+fun UnsentDrawerScreen(vm: AppViewModel, contactId: Long) {
+    val c = vm.themeColors
+    val contact = vm.contacts.find { it.id == contactId }
+    val myUnsent = vm.unsentMessages.filter { it.contactId == contactId }
+    var draftText by remember { mutableStateOf("") }
+
+    Column(modifier = Modifier.fillMaxSize().background(c.bg)) {
+        Row(
+            modifier = Modifier.fillMaxWidth().background(c.surface2)
+                .statusBarsPadding().padding(horizontal = 12.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            NeuIconButton(
+                icon = { Icon(Icons.Default.ArrowBack, null, tint = c.textMid, modifier = Modifier.size(18.dp)) },
+                onClick = { vm.showUnsentDrawer = false }
+            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text("✦ Unsent Drawer", color = c.text, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                Text(contact?.name ?: "Unknown", color = Purple, fontSize = 12.sp)
+            }
+        }
+
+        // Context card
+        GlassCard(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text("✦ Your private space", color = c.text, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                Text(
+                    "Write things you're not ready to send. If you ever choose to share one, ${contact?.name ?: "they"} will see it was written a while ago.",
+                    color = c.textSub, fontSize = 12.sp, lineHeight = 18.sp
+                )
+            }
+        }
+
+        // Draft new unsent
+        Column(modifier = Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedTextField(
+                value = draftText,
+                onValueChange = { draftText = it },
+                placeholder = { Text("Write what you're not ready to say...", color = c.textSub, fontSize = 13.sp) },
+                modifier = Modifier.fillMaxWidth().heightIn(min = 80.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = c.text, unfocusedTextColor = c.text,
+                    focusedBorderColor = Purple, unfocusedBorderColor = c.border,
+                    focusedContainerColor = c.surface, unfocusedContainerColor = c.surface
+                )
+            )
+            GradientButton(
+                text = "Save to Drawer ✦",
+                onClick = { vm.saveUnsent(contactId, draftText); draftText = "" },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = draftText.isNotBlank()
+            )
+        }
+
+        // Saved unsent messages
+        if (myUnsent.isEmpty()) {
+            Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+                Text("Nothing saved yet", color = c.textSub, fontSize = 13.sp)
+            }
+        } else {
+            SectionLabel("Saved — ${myUnsent.size}")
+            LazyColumn(
+                modifier = Modifier.weight(1f),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(myUnsent) { unsent ->
+                    GlassCard(modifier = Modifier.fillMaxWidth()) {
+                        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Text(unsent.text, color = c.text, fontSize = 14.sp, lineHeight = 20.sp)
+                            Text("Written at ${unsent.writtenAt}", color = c.textSub, fontSize = 10.sp)
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                GradientButton(
+                                    text = "Send now ✦",
+                                    onClick = { vm.sendUnsentNow(unsent) },
+                                    modifier = Modifier.weight(1f)
+                                )
+                                OutlinedButton(
+                                    onClick = { vm.unsentMessages.remove(unsent) },
+                                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFEF4444).copy(0.5f))
+                                ) {
+                                    Text("Delete", color = Color(0xFFEF4444), fontSize = 12.sp)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  SHARED SPACE SCREEN — persistent canvas two people build together
+// ══════════════════════════════════════════════════════════════════════════════
+@Composable
+fun SharedSpaceScreen(vm: AppViewModel) {
+    val c = vm.themeColors
+    val contact = vm.sharedSpaceContact
+    val space = contact?.let { vm.getOrCreateSharedSpace(it.id) }
+    var inputText by remember { mutableStateOf("") }
+    var selectedType by remember { mutableStateOf("note") }
+
+    if (contact == null) {
+        // Show contact picker
+        Box(modifier = Modifier.fillMaxSize().background(c.bg)) {
+            AuroraBackground(theme = vm.appTheme, modifier = Modifier.fillMaxSize())
+            Column(modifier = Modifier.fillMaxSize()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().background(c.surface2)
+                        .statusBarsPadding().padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    NeuIconButton(icon = { Icon(Icons.Default.ArrowBack, null, tint = c.textMid, modifier = Modifier.size(18.dp)) },
+                        onClick = { vm.showSharedSpace = false })
+                    Text("Shared Spaces", color = c.text, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                }
+                LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    item {
+                        Text("Choose who to build a space with", color = c.textSub, fontSize = 13.sp,
+                            modifier = Modifier.padding(bottom = 8.dp))
+                    }
+                    items(vm.contacts) { ct ->
+                        val hasSpace = vm.sharedSpaces.any { it.contactId == ct.id }
+                        Row(
+                            modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp))
+                                .background(c.surface)
+                                .border(1.dp, if (hasSpace) Purple.copy(0.4f) else c.border, RoundedCornerShape(16.dp))
+                                .clickable { vm.sharedSpaceContact = ct }
+                                .padding(14.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(modifier = Modifier.size(40.dp).clip(RoundedCornerShape(12.dp))) {
+                                FragmentAvatar(paletteIndex = ct.paletteIndex, seed = fragSeed(ct.id))
+                            }
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(ct.name, color = c.text, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                                val itemCount = vm.sharedSpaces.find { it.contactId == ct.id }?.items?.size ?: 0
+                                Text(if (hasSpace) "$itemCount items in your space" else "No space yet — start one", color = c.textSub, fontSize = 11.sp)
+                            }
+                            if (hasSpace) Text("✦", color = Purple, fontSize = 16.sp)
+                        }
+                    }
+                }
+            }
+        }
+        return
+    }
+
+    Column(modifier = Modifier.fillMaxSize().background(c.bg)) {
+        Row(
+            modifier = Modifier.fillMaxWidth().background(c.surface2)
+                .statusBarsPadding().padding(horizontal = 12.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            NeuIconButton(icon = { Icon(Icons.Default.ArrowBack, null, tint = c.textMid, modifier = Modifier.size(18.dp)) },
+                onClick = { vm.sharedSpaceContact = null })
+            Column(modifier = Modifier.weight(1f)) {
+                Text("✦ ${contact.name}", color = c.text, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                Text("Your shared space · ${space?.items?.size ?: 0} items", color = Purple, fontSize = 11.sp)
+            }
+        }
+
+        // Type selector
+        Row(modifier = Modifier.fillMaxWidth().background(c.surface2).padding(horizontal = 12.dp, vertical = 6.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            listOf("note" to "📝", "voice" to "🎙", "doodle" to "✏️", "photo" to "📸").forEach { (type, emoji) ->
+                Box(
+                    modifier = Modifier.clip(RoundedCornerShape(10.dp))
+                        .background(if (selectedType == type) Purple.copy(0.2f) else Color.Transparent)
+                        .border(1.dp, if (selectedType == type) Purple else c.border, RoundedCornerShape(10.dp))
+                        .clickable { selectedType = type }
+                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                ) { Text("$emoji ${type.replaceFirstChar { it.uppercase() }}", color = if (selectedType == type) Purple else c.textSub, fontSize = 12.sp) }
+            }
+        }
+
+        // Input row
+        Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(modifier = Modifier.weight(1f).clip(RoundedCornerShape(16.dp)).background(c.surface)) {
+                TextField(
+                    value = inputText, onValueChange = { inputText = it },
+                    placeholder = { Text("Add to your space...", color = c.textSub, fontSize = 13.sp) },
+                    singleLine = true,
+                    colors = TextFieldDefaults.colors(
+                        unfocusedContainerColor = Color.Transparent, focusedContainerColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent, focusedIndicatorColor = Color.Transparent,
+                        unfocusedTextColor = c.text, focusedTextColor = c.text
+                    )
+                )
+            }
+            Box(
+                modifier = Modifier.size(40.dp).clip(RoundedCornerShape(12.dp))
+                    .background(Brush.linearGradient(listOf(Purple, Pink)))
+                    .clickable(enabled = inputText.isNotBlank()) {
+                        space?.items?.add(AppViewModel.SharedSpaceItem(
+                            type = selectedType, content = inputText,
+                            authorName = vm.profile.name, timestamp = vm.currentTime()
+                        ))
+                        inputText = ""
+                        vm.showToast(contact.name, "Added to your space ✦", "low")
+                    },
+                contentAlignment = Alignment.Center
+            ) { Icon(Icons.Default.Add, null, tint = Color.White, modifier = Modifier.size(18.dp)) }
+        }
+
+        // Space items
+        if (space?.items.isNullOrEmpty()) {
+            Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text("🏡", fontSize = 44.sp)
+                    Text("Your shared room is empty", color = c.text, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                    Text("Add notes, doodles, voice memos — anything that matters", color = c.textSub, fontSize = 12.sp, textAlign = TextAlign.Center)
+                }
+            }
+        } else {
+            LazyColumn(modifier = Modifier.weight(1f), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                items(space!!.items.reversed()) { item ->
+                    val emoji = when (item.type) { "note" -> "📝"; "voice" -> "🎙"; "doodle" -> "✏️"; "photo" -> "📸"; else -> "✦" }
+                    GlassCard(modifier = Modifier.fillMaxWidth()) {
+                        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                                Text(emoji, fontSize = 14.sp)
+                                Text(item.authorName, color = Purple, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                                Spacer(modifier = Modifier.weight(1f))
+                                Text(item.timestamp, color = c.textSub, fontSize = 10.sp)
+                            }
+                            Text(item.content, color = c.text, fontSize = 14.sp, lineHeight = 20.sp)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  SEASONAL FRIENDSHIP CARD
+// ══════════════════════════════════════════════════════════════════════════════
+@Composable
+fun SeasonalFriendshipCard(vm: AppViewModel, season: AppViewModel.FriendshipSeason, onDismiss: () -> Unit) {
+    val c = vm.themeColors
+    Box(
+        modifier = Modifier.fillMaxSize().background(Color.Black.copy(0.7f)).clickable { onDismiss() },
+        contentAlignment = Alignment.Center
+    ) {
+        GlassCard(modifier = Modifier.padding(horizontal = 28.dp).clickable(onClick = {})) {
+            Column(modifier = Modifier.padding(26.dp), verticalArrangement = Arrangement.spacedBy(14.dp),
+                horizontalAlignment = Alignment.CenterHorizontally) {
+                Text("🌿", fontSize = 42.sp)
+                Text(season.label, color = Purple, fontSize = 13.sp, letterSpacing = 1.sp, fontWeight = FontWeight.SemiBold)
+                Text("${season.contactName}", color = c.text, fontSize = 22.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+                HorizontalDivider(color = c.border)
+                Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("${season.messageCount}", color = Pink, fontSize = 22.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
+                        Text("messages", color = c.textSub, fontSize = 10.sp)
+                    }
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("${season.callCount}", color = Purple, fontSize = 22.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
+                        Text("calls", color = c.textSub, fontSize = 10.sp)
+                    }
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("${season.vibeCount}", color = Cyan, fontSize = 22.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
+                        Text("vibes", color = c.textSub, fontSize = 10.sp)
+                    }
+                }
+                Text(
+                    "This season has gone quiet. It's been archived with love — not deleted.",
+                    color = c.textSub, fontSize = 12.sp, textAlign = TextAlign.Center, lineHeight = 18.sp
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    OutlinedButton(onClick = { onDismiss() }) {
+                        Text("Leave archived", color = c.textSub, fontSize = 12.sp)
+                    }
+                    GradientButton(
+                        text = "Reconnect ✦",
+                        onClick = {
+                            val ct = vm.contacts.find { it.id == season.contactId }
+                            if (ct != null) vm.openChat(ct.id)
+                            onDismiss()
+                        }
+                    )
+                }
+            }
+        }
     }
 }

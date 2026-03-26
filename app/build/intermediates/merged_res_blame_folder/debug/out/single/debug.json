@@ -1,82 +1,118 @@
 [
     {
-        "merged": "com.cloes.app-merged_res-5:/mipmap-anydpi-v26_ic_launcher_round.xml.flat",
-        "source": "com.cloes.app-main-7:/mipmap-anydpi-v26/ic_launcher_round.xml"
+        "merged": "C:\\Users\\braya\\.gradle\\daemon\\9.0-milestone-1\\com.cloes.app-merged_res-5:\\drawable_muse_logo_5.jpg.flat",
+        "source": "C:\\Users\\braya\\.gradle\\daemon\\9.0-milestone-1\\com.cloes.app-main-7:\\drawable\\muse_logo_5.jpg"
     },
     {
-        "merged": "com.cloes.app-merged_res-5:/mipmap-xxhdpi_ic_launcher.png.flat",
-        "source": "com.cloes.app-main-7:/mipmap-xxhdpi/ic_launcher.png"
+        "merged": "C:\\Users\\braya\\.gradle\\daemon\\9.0-milestone-1\\com.cloes.app-merged_res-5:\\mipmap-hdpi_ic_launcher_round.png.flat",
+        "source": "C:\\Users\\braya\\.gradle\\daemon\\9.0-milestone-1\\com.cloes.app-main-7:\\mipmap-hdpi\\ic_launcher_round.png"
     },
     {
-        "merged": "com.cloes.app-merged_res-5:/mipmap-anydpi-v26_ic_launcher.xml.flat",
-        "source": "com.cloes.app-main-7:/mipmap-anydpi-v26/ic_launcher.xml"
+        "merged": "com.cloes.app-merged_res-5:/raw_muse_sorry.mp3.flat",
+        "source": "com.cloes.app-main-7:/raw/muse_sorry.mp3"
     },
     {
-        "merged": "com.cloes.app-merged_res-5:/mipmap-xxxhdpi_ic_launcher.png.flat",
-        "source": "com.cloes.app-main-7:/mipmap-xxxhdpi/ic_launcher.png"
+        "merged": "C:\\Users\\braya\\.gradle\\daemon\\9.0-milestone-1\\com.cloes.app-merged_res-5:\\drawable_ic_launcher_background.xml.flat",
+        "source": "C:\\Users\\braya\\.gradle\\daemon\\9.0-milestone-1\\com.cloes.app-main-7:\\drawable\\ic_launcher_background.xml"
     },
     {
-        "merged": "com.cloes.app-merged_res-5:/mipmap-hdpi_ic_launcher.png.flat",
-        "source": "com.cloes.app-main-7:/mipmap-hdpi/ic_launcher.png"
-    },
-    {
-        "merged": "com.cloes.app-merged_res-5:/mipmap-hdpi_ic_launcher_round.png.flat",
-        "source": "com.cloes.app-main-7:/mipmap-hdpi/ic_launcher_round.png"
-    },
-    {
-        "merged": "com.cloes.app-merged_res-5:/drawable_muse_logo_5.jpg.flat",
-        "source": "com.cloes.app-main-7:/drawable/muse_logo_5.jpg"
+        "merged": "C:\\Users\\braya\\.gradle\\daemon\\9.0-milestone-1\\com.cloes.app-merged_res-5:\\mipmap-anydpi-v26_ic_launcher.xml.flat",
+        "source": "C:\\Users\\braya\\.gradle\\daemon\\9.0-milestone-1\\com.cloes.app-main-7:\\mipmap-anydpi-v26\\ic_launcher.xml"
     },
     {
         "merged": "com.cloes.app-merged_res-5:/drawable_ic_launcher_foreground.xml.flat",
         "source": "com.cloes.app-main-7:/drawable/ic_launcher_foreground.xml"
     },
     {
-        "merged": "com.cloes.app-merged_res-5:/mipmap-xxxhdpi_ic_launcher_round.png.flat",
-        "source": "com.cloes.app-main-7:/mipmap-xxxhdpi/ic_launcher_round.png"
-    },
-    {
         "merged": "com.cloes.app-merged_res-5:/drawable_muse_logo_4.jpg.flat",
         "source": "com.cloes.app-main-7:/drawable/muse_logo_4.jpg"
     },
     {
-        "merged": "com.cloes.app-merged_res-5:/mipmap-xxhdpi_ic_launcher_round.png.flat",
-        "source": "com.cloes.app-main-7:/mipmap-xxhdpi/ic_launcher_round.png"
+        "merged": "C:\\Users\\braya\\.gradle\\daemon\\9.0-milestone-1\\com.cloes.app-merged_res-5:\\drawable_muse_logo_3.jpg.flat",
+        "source": "C:\\Users\\braya\\.gradle\\daemon\\9.0-milestone-1\\com.cloes.app-main-7:\\drawable\\muse_logo_3.jpg"
     },
     {
-        "merged": "com.cloes.app-merged_res-5:/mipmap-mdpi_ic_launcher.png.flat",
-        "source": "com.cloes.app-main-7:/mipmap-mdpi/ic_launcher.png"
+        "merged": "C:\\Users\\braya\\.gradle\\daemon\\9.0-milestone-1\\com.cloes.app-merged_res-5:\\mipmap-xxxhdpi_ic_launcher_round.png.flat",
+        "source": "C:\\Users\\braya\\.gradle\\daemon\\9.0-milestone-1\\com.cloes.app-main-7:\\mipmap-xxxhdpi\\ic_launcher_round.png"
     },
     {
-        "merged": "com.cloes.app-merged_res-5:/drawable_muse_logo_3.jpg.flat",
-        "source": "com.cloes.app-main-7:/drawable/muse_logo_3.jpg"
-    },
-    {
-        "merged": "com.cloes.app-merged_res-5:/drawable_muse_logo_2.jpg.flat",
-        "source": "com.cloes.app-main-7:/drawable/muse_logo_2.jpg"
-    },
-    {
-        "merged": "com.cloes.app-merged_res-5:/mipmap-xhdpi_ic_launcher.png.flat",
-        "source": "com.cloes.app-main-7:/mipmap-xhdpi/ic_launcher.png"
-    },
-    {
-        "merged": "com.cloes.app-merged_res-5:/mipmap-xhdpi_ic_launcher_round.png.flat",
-        "source": "com.cloes.app-main-7:/mipmap-xhdpi/ic_launcher_round.png"
+        "merged": "C:\\Users\\braya\\.gradle\\daemon\\9.0-milestone-1\\com.cloes.app-merged_res-5:\\drawable_ic_launcher_foreground.xml.flat",
+        "source": "C:\\Users\\braya\\.gradle\\daemon\\9.0-milestone-1\\com.cloes.app-main-7:\\drawable\\ic_launcher_foreground.xml"
     },
     {
         "merged": "com.cloes.app-merged_res-5:/drawable_muse_logo_1.jpg.flat",
         "source": "com.cloes.app-main-7:/drawable/muse_logo_1.jpg"
     },
     {
-        "merged": "com.cloes.app-merged_res-5:/mipmap-mdpi_ic_launcher_round.png.flat",
-        "source": "com.cloes.app-main-7:/mipmap-mdpi/ic_launcher_round.png"
+        "merged": "C:\\Users\\braya\\.gradle\\daemon\\9.0-milestone-1\\com.cloes.app-merged_res-5:\\drawable_muse_logo_2.jpg.flat",
+        "source": "C:\\Users\\braya\\.gradle\\daemon\\9.0-milestone-1\\com.cloes.app-main-7:\\drawable\\muse_logo_2.jpg"
     },
     {
-        "merged": "com.cloes.app-merged_res-5:/drawable_ic_launcher_background.xml.flat",
-        "source": "com.cloes.app-main-7:/drawable/ic_launcher_background.xml"
+        "merged": "C:\\Users\\braya\\.gradle\\daemon\\9.0-milestone-1\\com.cloes.app-merged_res-5:\\mipmap-xxhdpi_ic_launcher.png.flat",
+        "source": "C:\\Users\\braya\\.gradle\\daemon\\9.0-milestone-1\\com.cloes.app-main-7:\\mipmap-xxhdpi\\ic_launcher.png"
     },
     {
-        "merged": "com.cloes.app-merged_res-5:/drawable_ic_launcher.png.flat",
-        "source": "com.cloes.app-main-7:/drawable/ic_launcher.png"
+        "merged": "com.cloes.app-merged_res-5:/drawable_cloes_logo.jpg.flat",
+        "source": "com.cloes.app-main-7:/drawable/cloes_logo.jpg"
+    },
+    {
+        "merged": "C:\\Users\\braya\\.gradle\\daemon\\9.0-milestone-1\\com.cloes.app-merged_res-5:\\mipmap-hdpi_ic_launcher.png.flat",
+        "source": "C:\\Users\\braya\\.gradle\\daemon\\9.0-milestone-1\\com.cloes.app-main-7:\\mipmap-hdpi\\ic_launcher.png"
+    },
+    {
+        "merged": "C:\\Users\\braya\\.gradle\\daemon\\9.0-milestone-1\\com.cloes.app-merged_res-5:\\mipmap-anydpi-v26_ic_launcher_round.xml.flat",
+        "source": "C:\\Users\\braya\\.gradle\\daemon\\9.0-milestone-1\\com.cloes.app-main-7:\\mipmap-anydpi-v26\\ic_launcher_round.xml"
+    },
+    {
+        "merged": "C:\\Users\\braya\\.gradle\\daemon\\9.0-milestone-1\\com.cloes.app-merged_res-5:\\mipmap-mdpi_ic_launcher_round.png.flat",
+        "source": "C:\\Users\\braya\\.gradle\\daemon\\9.0-milestone-1\\com.cloes.app-main-7:\\mipmap-mdpi\\ic_launcher_round.png"
+    },
+    {
+        "merged": "C:\\Users\\braya\\.gradle\\daemon\\9.0-milestone-1\\com.cloes.app-merged_res-5:\\mipmap-xxhdpi_ic_launcher_round.png.flat",
+        "source": "C:\\Users\\braya\\.gradle\\daemon\\9.0-milestone-1\\com.cloes.app-main-7:\\mipmap-xxhdpi\\ic_launcher_round.png"
+    },
+    {
+        "merged": "com.cloes.app-merged_res-5:/raw_muse_yes.mp3.flat",
+        "source": "com.cloes.app-main-7:/raw/muse_yes.mp3"
+    },
+    {
+        "merged": "com.cloes.app-merged_res-5:/drawable_muse_logo_3.jpg.flat",
+        "source": "com.cloes.app-main-7:/drawable/muse_logo_3.jpg"
+    },
+    {
+        "merged": "C:\\Users\\braya\\.gradle\\daemon\\9.0-milestone-1\\com.cloes.app-merged_res-5:\\mipmap-xhdpi_ic_launcher_round.png.flat",
+        "source": "C:\\Users\\braya\\.gradle\\daemon\\9.0-milestone-1\\com.cloes.app-main-7:\\mipmap-xhdpi\\ic_launcher_round.png"
+    },
+    {
+        "merged": "C:\\Users\\braya\\.gradle\\daemon\\9.0-milestone-1\\com.cloes.app-merged_res-5:\\drawable_muse_logo_4.jpg.flat",
+        "source": "C:\\Users\\braya\\.gradle\\daemon\\9.0-milestone-1\\com.cloes.app-main-7:\\drawable\\muse_logo_4.jpg"
+    },
+    {
+        "merged": "C:\\Users\\braya\\.gradle\\daemon\\9.0-milestone-1\\com.cloes.app-merged_res-5:\\mipmap-xhdpi_ic_launcher.png.flat",
+        "source": "C:\\Users\\braya\\.gradle\\daemon\\9.0-milestone-1\\com.cloes.app-main-7:\\mipmap-xhdpi\\ic_launcher.png"
+    },
+    {
+        "merged": "C:\\Users\\braya\\.gradle\\daemon\\9.0-milestone-1\\com.cloes.app-merged_res-5:\\drawable_muse_logo_1.jpg.flat",
+        "source": "C:\\Users\\braya\\.gradle\\daemon\\9.0-milestone-1\\com.cloes.app-main-7:\\drawable\\muse_logo_1.jpg"
+    },
+    {
+        "merged": "com.cloes.app-merged_res-5:/drawable_muse_logo_2.jpg.flat",
+        "source": "com.cloes.app-main-7:/drawable/muse_logo_2.jpg"
+    },
+    {
+        "merged": "C:\\Users\\braya\\.gradle\\daemon\\9.0-milestone-1\\com.cloes.app-merged_res-5:\\mipmap-mdpi_ic_launcher.png.flat",
+        "source": "C:\\Users\\braya\\.gradle\\daemon\\9.0-milestone-1\\com.cloes.app-main-7:\\mipmap-mdpi\\ic_launcher.png"
+    },
+    {
+        "merged": "C:\\Users\\braya\\.gradle\\daemon\\9.0-milestone-1\\com.cloes.app-merged_res-5:\\drawable_ic_launcher.png.flat",
+        "source": "C:\\Users\\braya\\.gradle\\daemon\\9.0-milestone-1\\com.cloes.app-main-7:\\drawable\\ic_launcher.png"
+    },
+    {
+        "merged": "com.cloes.app-merged_res-5:/raw_muse_on_it.mp3.flat",
+        "source": "com.cloes.app-main-7:/raw/muse_on_it.mp3"
+    },
+    {
+        "merged": "C:\\Users\\braya\\.gradle\\daemon\\9.0-milestone-1\\com.cloes.app-merged_res-5:\\mipmap-xxxhdpi_ic_launcher.png.flat",
+        "source": "C:\\Users\\braya\\.gradle\\daemon\\9.0-milestone-1\\com.cloes.app-main-7:\\mipmap-xxxhdpi\\ic_launcher.png"
     }
 ]

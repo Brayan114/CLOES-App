@@ -20,3 +20,13 @@ local.properties
 
 # Railway
 .railway
+
+build/
+app/build/
+.gradle/
+.idea/
+local.properties
+node_modules/
+dist/
+CLOES_Web_Admin/node_modules/
+CLOES_Web_Admin/dist/
