@@ -90,6 +90,25 @@ public/admin.html     # Admin portal
 
 ---
 
+## Data Persistence & Storage
+
+CLOES uses a **Cloud-First + In-Memory** architecture designed for privacy and multi-device sync:
+
+1. **Permanent Storage (Cloud):** 
+   - All messages and conversations are stored in a **MongoDB Atlas** database.
+   - **Backend Model:** [Message.js](file:///c:/Users/braya/.gemini/antigravity/scratch/CLOES_v2_Fixed/CLOES_Backend_Complete/CLOES_Backend_Package/src/models/Message.js) and [Conversation.js](file:///c:/Users/braya/.gemini/antigravity/scratch/CLOES_v2_Fixed/CLOES_Backend_Complete/CLOES_Backend_Package/src/models/Conversation.js).
+   - Sending a message POSTs it to the cloud immediately.
+
+2. **Mobile Persistence (Android):**
+   - The app stores messages in a **reactive in-memory cache** within `AppViewModel`.
+   - **Frontend Model:** [Models.kt](file:///c:/Users/braya/.gemini/antigravity/scratch/CLOES_v2_Fixed/app/src/main/java/com/cloes/app/data/Models.kt).
+   - **Behavior:** For security, the local cache is wiped on logout. History is then **eagerly refetched** from the backend upon the next login and when a chat is opened.
+
+3. **No Local DB:** 
+   - The Android app **does not utilize a persistent local database** (like SQLite or Room) for chat history. This ensures that no chat data remains on the device's storage after an account is closed or logged out, maintaining the "CLOES" (Cloaked) privacy standard.
+
+---
+
 ## Setup From Scratch
 
 ### Backend

@@ -10,6 +10,12 @@ import com.cloes.app.ui.theme.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.TimeZone
+import java.time.Instant
+import java.time.format.DateTimeParseException
 
 class AppViewModel : ViewModel() {
 
@@ -28,6 +34,16 @@ class AppViewModel : ViewModel() {
     val vibeVideos = mutableStateListOf<VibeVideo>().also { it.addAll(SeedData.VIBE_VIDEOS) }
     val groupChats = mutableStateListOf<GroupChat>()
     val meetUsers  = mutableStateListOf<MeetUser>().also { it.addAll(SeedData.MEET_USERS) }
+
+    // Auth
+    var showLoginPage           by mutableStateOf(false)
+    var showSignupPage          by mutableStateOf(false)
+    var showLogoutDialog        by mutableStateOf(false)
+    var showDeleteAccountDialog by mutableStateOf(false)
+    var authToken               by mutableStateOf<String?>(null)
+    var isAuthLoading           by mutableStateOf(false)
+    var authError               by mutableStateOf<String?>(null)
+    var hasCheckedSession       by mutableStateOf(false)
 
     // UI state
     var showAddContact         by mutableStateOf(false)
@@ -198,14 +214,6 @@ class AppViewModel : ViewModel() {
     var showMuseTask by mutableStateOf(false)
 
     // Auth
-    var showLoginPage           by mutableStateOf(false)
-    var showSignupPage          by mutableStateOf(false)
-    var showLogoutDialog        by mutableStateOf(false)
-    var showDeleteAccountDialog by mutableStateOf(false)
-    var authToken               by mutableStateOf<String?>(null)
-    var isAuthLoading           by mutableStateOf(false)
-    var authError               by mutableStateOf<String?>(null)
-    var hasCheckedSession       by mutableStateOf(false)
 
     fun checkSavedSession(ctx: Context) {
         val saved = CloesApi.getToken(ctx)
@@ -222,6 +230,7 @@ class AppViewModel : ViewModel() {
                     handle = result.userHandle ?: ""
                 )
                 currentScreen = if (result.onboarded) "main" else "onboard"
+                syncConversations()
             }
         }
     }
@@ -237,6 +246,7 @@ class AppViewModel : ViewModel() {
                 profile = profile.copy(name = result.userName ?: name, handle = result.userHandle ?: "")
                 currentScreen = "onboard"
                 showSignupPage = false; showLoginPage = false
+                syncConversations()
             } else {
                 authError = result.error
             }
@@ -254,6 +264,7 @@ class AppViewModel : ViewModel() {
                 profile = profile.copy(name = result.userName ?: "", handle = result.userHandle ?: "")
                 currentScreen = if (result.onboarded) "main" else "onboard"
                 showSignupPage = false; showLoginPage = false
+                syncConversations()
             } else {
                 authError = result.error
             }
@@ -438,7 +449,13 @@ class AppViewModel : ViewModel() {
     fun showToast(name: String, msg: String, urgency: String = "low") { toastName = name; toastMsg = msg; toastUrgency = urgency; toastVisible = true }
     fun showIncomingToast(name: String, msg: String, urgency: String = "low") { if (notificationsEnabled) showToast(name, msg, urgency) }
     fun showToastIfEnabled(name: String, msg: String, urgency: String = "low") { if (notificationsEnabled) showToast(name, msg, urgency) }
-    fun openChat(id: Long) { val c = contacts.find { it.id == id } ?: return; currentChatId = id; c.unread = 0; if (c.urgency == "high") urgencyTintOn = true }
+    fun openChat(id: Long) {
+        val c = contacts.find { it.id == id } ?: return
+        currentChatId = id
+        c.unread = 0
+        if (c.urgency == "high") urgencyTintOn = true
+        viewModelScope.launch { if (authToken != null) syncMessages() }
+    }
     fun closeChat() { currentChatId = null; urgencyTintOn = false; showStickerPanel = false; replyingToMessage = null }
     fun sendMessage(text: String) {
         val c = currentContact() ?: return
@@ -450,17 +467,32 @@ class AppViewModel : ViewModel() {
             return
         }
         val reply = replyingToMessage
-        c.messages.add(Message(
+        val convoId = c.backendId
+        
+        // Add to local UI first for responsiveness
+        val now = System.currentTimeMillis()
+        val msg = Message(
             text = text, sent = true, timestamp = currentTime(),
+            createdAt = now,
             replyToId = reply?.id, replyToText = reply?.text?.take(60)
-        ))
+        )
+        c.messages.add(msg)
+        
         replyingToMessage = null
         chatInput = ""
+
+        // Post to backend
+        if (convoId.isNotBlank() && authToken != null) {
+            viewModelScope.launch(Dispatchers.IO) {
+                CloesApi.sendMessage(authToken!!, convoId, text)
+            }
+        }
     }
     fun sendMessageNow(text: String) {
         val c = currentContact() ?: return
         val reply = replyingToMessage
         c.messages.add(Message(text = text, sent = true, timestamp = currentTime(),
+            createdAt = System.currentTimeMillis(),
             replyToId = reply?.id, replyToText = reply?.text?.take(60)))
         replyingToMessage = null
         chatInput = ""
@@ -517,7 +549,7 @@ class AppViewModel : ViewModel() {
             try {
                 val match = CloesApi.searchUser(t, newContactHandle)
                 if (match != null) {
-                    CloesApi.createDirectConversation(t, match._id)
+                    val convoId = CloesApi.createDirectConversation(t, match._id)
                     withContext(Dispatchers.Main) {
                         val cName = newContactName.ifBlank { match.name }
                         val newC = Contact(
@@ -527,7 +559,7 @@ class AppViewModel : ViewModel() {
                             paletteIndex = newContactFrag,
                             group = newContactGroup,
                             online = match.online,
-                            backendId = match._id
+                            backendId = convoId ?: ""
                         )
                         contacts.add(0, newC)
                         showToast("Connections", "Added ${match.name} ✦", "low")
@@ -590,6 +622,10 @@ class AppViewModel : ViewModel() {
             authToken?.let { CloesApi.logout(it) }
             ctx?.let { CloesApi.clearToken(it) }
             authToken = null
+            contacts.clear()
+            groups.clear(); groups.addAll(SeedData.GROUPS)
+            groupChats.clear(); museNotes.clear(); museDressMessages.clear(); coinBalance = 0
+            profile = UserProfile()
             currentScreen = "splash"
             showToast("CLOES", "See you soon ✦", "low")
         }
@@ -600,10 +636,113 @@ class AppViewModel : ViewModel() {
             authToken?.let { CloesApi.deleteAccount(it) }
             ctx?.let { CloesApi.clearToken(it) }
             authToken = null
-            contacts.clear(); groups.clear(); groupChats.clear(); museNotes.clear(); museDressMessages.clear(); coinBalance = 0
+            contacts.clear()
+            groups.clear(); groups.addAll(SeedData.GROUPS)
+            groupChats.clear(); museNotes.clear(); museDressMessages.clear(); coinBalance = 0
+            profile = UserProfile()
             currentScreen = "splash"
         }
     }
+
+    suspend fun syncConversations() {
+        val t = authToken ?: return
+        val convos = CloesApi.fetchConversations(t)
+        withContext(Dispatchers.Main) {
+            convos.forEach { convo ->
+                val other = convo.participants.find { it.handle != profile.handle } ?: return@forEach
+                val exists = contacts.find { it.backendId == convo._id }
+                
+                val lastMsgEpoch = if (convo.lastMessageAt != null) {
+                    try { Instant.parse(convo.lastMessageAt).toEpochMilli() } catch(e: Exception) { System.currentTimeMillis() }
+                } else System.currentTimeMillis()
+
+                if (exists == null) {
+                    val newContact = Contact(
+                        id = convo._id.hashCode().toLong(),
+                        name = other.name,
+                        handle = other.handle,
+                        backendId = convo._id,
+                        online = other.online,
+                        paletteIndex = (Math.random() * 5).toInt()
+                    )
+                    if (convo.lastMessageText != null) {
+                        newContact.messages.add(com.cloes.app.data.Message(
+                            id = lastMsgEpoch,
+                            text = convo.lastMessageText,
+                            sent = convo.lastMessageSender == profile.handle || convo.lastMessageSender == profile.name,
+                            timestamp = convo.lastMessageAt ?: "",
+                            createdAt = lastMsgEpoch,
+                            backendId = convo.lastMessageId // Assuming LastMessageId was added or hashed
+                        ))
+                    }
+                    contacts.add(newContact)
+                } else if (convo.lastMessageText != null) {
+                    val lastMsg = exists.messages.lastOrNull()
+                    if (lastMsg == null || (lastMsg.text != convo.lastMessageText && lastMsg.backendId != convo.lastMessageId)) {
+                        // Update preview if changed or empty
+                        if (lastMsg != null && exists.messages.size == 1) {
+                            exists.messages[0] = com.cloes.app.data.Message(
+                                id = lastMsgEpoch,
+                                text = convo.lastMessageText,
+                                sent = convo.lastMessageSender == profile.handle || convo.lastMessageSender == profile.name,
+                                timestamp = convo.lastMessageAt ?: "",
+                                createdAt = lastMsgEpoch,
+                                backendId = convo.lastMessageId
+                            )
+                        } else if (lastMsg == null) {
+                            exists.messages.add(com.cloes.app.data.Message(
+                                id = lastMsgEpoch,
+                                text = convo.lastMessageText,
+                                sent = convo.lastMessageSender == profile.handle || convo.lastMessageSender == profile.name,
+                                timestamp = convo.lastMessageAt ?: "",
+                                createdAt = lastMsgEpoch,
+                                backendId = convo.lastMessageId
+                            ))
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    suspend fun syncMessages() {
+        val t = authToken ?: return
+        val currentC = currentContact() ?: return
+        val convoId = currentC.backendId
+        if (convoId.isBlank()) return
+        
+        val msgs = CloesApi.fetchMessages(t, convoId)
+        withContext(Dispatchers.Main) {
+            val c = currentContact() ?: return@withContext
+            if (c.backendId != convoId) return@withContext
+            
+            var changed = false
+            
+            msgs.forEach { m ->
+                val alreadyIn = c.messages.any { 
+                    it.backendId == m._id || (it.text == m.text && Math.abs(it.createdAt - (try { Instant.parse(m.createdAt).toEpochMilli() } catch(e: Exception) { 0L })) < 2000)
+                }
+                if (!alreadyIn) {
+                    val epoch = try { Instant.parse(m.createdAt).toEpochMilli() } catch(e: Exception) { System.currentTimeMillis() }
+                    c.messages.add(Message(
+                        id = epoch,
+                        text = m.text,
+                        sent = m.senderId.equals(profile.handle, ignoreCase = true) || m.senderId.equals(profile.name, ignoreCase = true), 
+                        timestamp = m.createdAt,
+                        createdAt = epoch,
+                        backendId = m._id
+                    ))
+                    changed = true
+                }
+            }
+            if (changed) {
+                val sorted = c.messages.distinctBy { it.backendId ?: it.id }.sortedBy { it.createdAt }
+                c.messages.clear()
+                c.messages.addAll(sorted)
+            }
+        }
+    }
+
     fun currentTime(): String { val cal = java.util.Calendar.getInstance(); val h = cal.get(java.util.Calendar.HOUR_OF_DAY); val m = cal.get(java.util.Calendar.MINUTE); return "$h:${m.toString().padStart(2, '0')}" }
 
     // ── Swipe-to-reply ────────────────────────────────────────────────────────
@@ -613,4 +752,23 @@ class AppViewModel : ViewModel() {
     // ── Scroll to replied message ─────────────────────────────────────────────
     var scrollToBubbleId by mutableStateOf<Long?>(-1L)
     fun jumpToMessage(id: Long) { scrollToBubbleId = id }
+
+    init {
+        // Background refresher
+        viewModelScope.launch {
+            while (true) {
+                if (authToken != null) {
+                    try {
+                        syncConversations()
+                        if (currentChatId != null) {
+                            syncMessages()
+                        }
+                    } catch (e: Exception) { e.printStackTrace() }
+                }
+                val delayMs = if (currentChatId != null) 3000L else 10000L
+                kotlinx.coroutines.delay(delayMs) 
+            }
+        }
+    }
 }
+

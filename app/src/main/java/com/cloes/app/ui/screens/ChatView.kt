@@ -44,18 +44,7 @@ fun ChatView(vm: AppViewModel) {
     val listState = rememberLazyListState()
     val scope = rememberCoroutineScope()
 
-    // Simulate typing then reply
-    LaunchedEffect(contact.messages.size) {
-        if (contact.messages.lastOrNull()?.sent == true) {
-            vm.typingContactId = contact.id
-            delay(1000)
-            vm.typingContactId = null
-            delay(300)
-            val replies = listOf("got it!", "okay ✦", "love that for us", "on it!", "haha yes exactly", "wait really??", "omg", "noted! 💜")
-            contact.messages.add(Message(text = replies.random(), sent = false, timestamp = vmTime()))
-            scope.launch { listState.animateScrollToItem(contact.messages.size - 1) }
-        }
-    }
+
 
     LaunchedEffect(contact.id) {
         if (contact.messages.isNotEmpty()) { delay(100); listState.scrollToItem(contact.messages.size - 1) }

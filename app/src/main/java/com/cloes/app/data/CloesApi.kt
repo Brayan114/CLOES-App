@@ -182,7 +182,25 @@ object CloesApi {
             } catch (_: Exception) { false }
         }
 
-    // ── Contacts & Connections ────────────────────────────────────────────────
+    // ── Contacts & Conversations ────────────────────────────────────────────────
+ 
+    data class ConversationDto(
+        val _id: String,
+        val type: String,
+        val participants: List<UserDto>,
+        val lastMessageAt: String? = null,
+        val lastMessageText: String? = null,
+        val lastMessageSender: String? = null,
+        val lastMessageId: String? = null
+    )
+
+    data class MessageDto(
+        val _id: String,
+        val senderId: String,
+        val text: String,
+        val type: String,
+        val createdAt: String
+    )
 
     data class UserDto(
         val _id: String,
@@ -198,8 +216,9 @@ object CloesApi {
     suspend fun searchUser(token: String, handle: String): UserDto? =
         withContext(Dispatchers.IO) {
             try {
+                val cleanHandle = handle.removePrefix("@")
                 val req = Request.Builder()
-                    .url("$BASE_URL/api/contacts/search?q=$handle")
+                    .url("$BASE_URL/api/contacts/search?q=$cleanHandle")
                     .addHeader("Authorization", "Bearer $token")
                     .build()
                 val resp = client.newCall(req).execute()
@@ -232,17 +251,135 @@ object CloesApi {
             } catch (e: Exception) { null }
         }
 
-    suspend fun createDirectConversation(token: String, userId: String): Boolean =
+    suspend fun createDirectConversation(token: String, userId: String): String? =
         withContext(Dispatchers.IO) {
             try {
                 val body = JSONObject().apply { put("userId", userId) }
                 val req = Request.Builder()
-                    .url("$BASE_URL/api/conversations/direct")
+                    .url("$BASE_URL/api/messages/conversations/direct")
                     .addHeader("Authorization", "Bearer $token")
                     .post(body.toString().toRequestBody(JSON_TYPE))
                     .build()
-                client.newCall(req).execute().isSuccessful
+                val resp = client.newCall(req).execute()
+                if (resp.isSuccessful) {
+                    val json = JSONObject(resp.body?.string() ?: "{}")
+                    json.optString("_id")
+                } else null
+            } catch (e: Exception) { null }
+        }
+
+    suspend fun fetchConversations(token: String): List<ConversationDto> =
+        withContext(Dispatchers.IO) {
+            try {
+                val req = Request.Builder()
+                    .url("$BASE_URL/api/messages/conversations")
+                    .addHeader("Authorization", "Bearer $token")
+                    .build()
+                val resp = client.newCall(req).execute()
+                if (resp.isSuccessful) {
+                    val arr = org.json.JSONArray(resp.body?.string() ?: "[]")
+                    val list = mutableListOf<ConversationDto>()
+                    for (i in 0 until arr.length()) {
+                        val obj = arr.getJSONObject(i)
+                        val partArr = obj.getJSONArray("participants")
+                        val lastMsgObj = obj.optJSONObject("lastMessage")
+                        val participants = mutableListOf<UserDto>()
+                        for (j in 0 until partArr.length()) {
+                            val p = partArr.getJSONObject(j)
+                            participants.add(UserDto(
+                                _id = p.getString("_id"),
+                                name = p.getString("name"),
+                                handle = p.getString("handle"),
+                                avatar = p.optString("avatar", ""),
+                                paletteColors = listOf(), // simplified
+                                lightSeed = p.optDouble("lightSeed", 0.42),
+                                online = p.optBoolean("online", false),
+                                lastSeen = p.optString("lastSeen", "")
+                            ))
+                        }
+                        list.add(ConversationDto(
+                            _id = obj.getString("_id"),
+                            type = obj.getString("type"),
+                            participants = participants,
+                            lastMessageAt = obj.optString("lastMessageAt"),
+                            lastMessageText = lastMsgObj?.optString("text"),
+                            lastMessageSender = lastMsgObj?.optString("sender"),
+                            lastMessageId = lastMsgObj?.optString("_id")
+                        ))
+                    }
+                    list
+                } else emptyList()
+            } catch (e: Exception) { emptyList() }
+        }
+
+    suspend fun fetchMessages(token: String, convoId: String): List<MessageDto> =
+        withContext(Dispatchers.IO) {
+            try {
+                val req = Request.Builder()
+                    .url("$BASE_URL/api/messages/conversations/$convoId/messages")
+                    .addHeader("Authorization", "Bearer $token")
+                    .build()
+                val resp = client.newCall(req).execute()
+                if (resp.isSuccessful) {
+                    val arr = org.json.JSONArray(resp.body?.string() ?: "[]")
+                    val list = mutableListOf<MessageDto>()
+                    for (i in 0 until arr.length()) {
+                        val obj = arr.getJSONObject(i)
+                        val senderObj = obj.optJSONObject("sender")
+                        val senderId = senderObj?.optString("handle") ?: obj.optString("sender")
+                        list.add(MessageDto(
+                            _id = obj.getString("_id"),
+                            senderId = senderId,
+                            text = obj.getString("text"),
+                            type = obj.optString("type", "text"),
+                            createdAt = obj.optString("createdAt")
+                        ))
+                    }
+                    list
+                } else emptyList()
+            } catch (e: Exception) { emptyList() }
+        }
+
+    suspend fun sendMessage(token: String, convoId: String, text: String): Boolean =
+        withContext(Dispatchers.IO) {
+            try {
+                val body = JSONObject().apply { put("text", text) }
+                val req = Request.Builder()
+                    .url("$BASE_URL/api/messages/conversations/$convoId/messages")
+                    .addHeader("Authorization", "Bearer $token")
+                    .post(body.toString().toRequestBody(JSON_TYPE))
+                    .build()
+                val resp = client.newCall(req).execute()
+                resp.isSuccessful
             } catch (e: Exception) { false }
+        }
+
+    suspend fun chatWithMuse(token: String, message: String, history: List<Pair<Boolean, String>>): String? =
+        withContext(Dispatchers.IO) {
+            try {
+                val historyArr = org.json.JSONArray()
+                history.takeLast(20).forEach { (isUser, text) ->
+                    val obj = JSONObject()
+                    obj.put("role", if (isUser) "user" else "muse")
+                    obj.put("text", text)
+                    historyArr.put(obj)
+                }
+                
+                val body = JSONObject().apply {
+                    put("message", message)
+                    put("history", historyArr)
+                }
+                val req = Request.Builder()
+                    .url("$BASE_URL/api/muse/chat")
+                    .addHeader("Authorization", "Bearer $token")
+                    .post(body.toString().toRequestBody(JSON_TYPE))
+                    .build()
+                val resp = client.newCall(req).execute()
+                if (resp.isSuccessful) {
+                    val json = JSONObject(resp.body?.string() ?: "{}")
+                    json.optString("reply", null)
+                } else null
+            } catch (e: Exception) { null }
         }
 
     /** Build the Google OAuth URL for the WebView */

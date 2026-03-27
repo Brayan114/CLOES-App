@@ -1,6 +1,8 @@
 package com.cloes.app.data
 
 import androidx.compose.ui.graphics.Color
+import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.runtime.mutableStateListOf
 
 // ─── Message ──────────────────────────────────────────────────────────────────
 data class Message(
@@ -8,14 +10,16 @@ data class Message(
     val text: String,
     val sent: Boolean,
     val timestamp: String,
+    val createdAt: Long = System.currentTimeMillis(),
+    val backendId: String? = null,    // NEW: for definitive deduplication
     val type: MsgType = MsgType.Text,
     val reactionEmoji: String? = null,
     val expiresAt: Long? = null,
     val pollData: PollData? = null,
     val fileType: String? = null,
     val isUnsent: Boolean = false,
-    val replyToId: Long? = null,      // NEW: swipe-to-reply target
-    val replyToText: String? = null   // NEW: preview snippet of replied msg
+    val replyToId: Long? = null,
+    val replyToText: String? = null
 )
 
 enum class MsgType { Text, Sticker, Poll, File, Image, Audio, Deleted, Video }
@@ -37,7 +41,7 @@ data class Contact(
     val days: Int = 0,
     val group: String = "FRIENDS",
     val paletteIndex: Int = 0,
-    val messages: MutableList<Message> = mutableListOf(),
+    val messages: SnapshotStateList<Message> = mutableStateListOf(),
     var locked: Boolean = false,
     var pinned: Boolean = false,
     var disappear: Int = 0,
@@ -120,7 +124,7 @@ data class GroupChat(
     val id: Long = System.currentTimeMillis(),
     val name: String,
     val memberIds: MutableList<Long> = mutableListOf(),
-    val messages: MutableList<Message> = mutableListOf(),
+    val messages: SnapshotStateList<Message> = mutableStateListOf(),
     val circleId: String? = null,
     val photoUri: String? = null,
     var description: String = ""

@@ -714,15 +714,18 @@ fun MuseAIPage(vm: AppViewModel) {
                         messages.add(Pair(true, query))
                         scope.launch {
                             listState.animateScrollToItem(messages.size - 1)
-                            delay(900)
-                            val replies = listOf(
-                                "I understand you completely — you deserve to feel heard 💜",
-                                "That sounds really meaningful. I'm glad you shared that ✦",
-                                "You have such a beautiful way of seeing things 🌙",
-                                "That's exactly the kind of thing worth holding onto 🌿",
-                                "I hear you. Whatever you're going through — you've got this ✦"
-                            )
-                            messages.add(Pair(false, replies.random()))
+                            val token = vm.authToken
+                            if (token != null) {
+                                val history = messages.dropLast(1).toList()
+                                val reply = com.cloes.app.data.CloesApi.chatWithMuse(token, query, history)
+                                if (reply != null) {
+                                    messages.add(Pair(false, reply))
+                                } else {
+                                    messages.add(Pair(false, "Hmm, I lost my connection to the ether ✦"))
+                                }
+                            } else {
+                                messages.add(Pair(false, "You need to be logged in to connect with me ✦"))
+                            }
                             listState.animateScrollToItem(messages.size - 1)
                         }
                     },
